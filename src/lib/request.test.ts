@@ -17,30 +17,40 @@ vi.mock("@/lib/authToken", () => ({
 }));
 
 describe("request utilities", () => {
-  it("requires auth token for protected business endpoints", () => {
-    expect(requiresAuthTokenForRequest("/xunzhi/v1/interview/sessions")).toBe(
-      true,
+  it("把 career 路径拼到 /api/ragent 下", () => {
+    expect(buildApiUrl("/career/interviews")).toContain(
+      "/api/ragent/career/interviews",
     );
-    expect(requiresAuthTokenForRequest("/xunzhi/v1/users/login")).toBe(false);
+  });
+
+  it("auth/login 不要求已登录 token", () => {
+    expect(requiresAuthTokenForRequest("/auth/login")).toBe(false);
+  });
+
+  it("career 接口要求 token", () => {
+    expect(requiresAuthTokenForRequest("/career/interviews")).toBe(true);
+  });
+
+  it("requires auth token for protected business endpoints", () => {
+    expect(requiresAuthTokenForRequest("/career/interviews")).toBe(true);
+    expect(requiresAuthTokenForRequest("/auth/login")).toBe(false);
   });
 
   it("throws unauthorized before request when protected endpoint has no token", () => {
     vi.mocked(getAuthToken).mockReturnValue(null);
 
-    expect(() =>
-      assertRequestAuthorized("/xunzhi/v1/interview/sessions"),
-    ).toThrow(AppError);
-    expect(() =>
-      assertRequestAuthorized("/xunzhi/v1/interview/sessions"),
-    ).toThrow("Unauthorized");
+    expect(() => assertRequestAuthorized("/career/interviews")).toThrow(
+      AppError,
+    );
+    expect(() => assertRequestAuthorized("/career/interviews")).toThrow(
+      "Unauthorized",
+    );
   });
 
   it("allows protected endpoint when token exists", () => {
     vi.mocked(getAuthToken).mockReturnValue("token-value");
 
-    expect(assertRequestAuthorized("/xunzhi/v1/interview/sessions")).toBe(
-      "token-value",
-    );
+    expect(assertRequestAuthorized("/career/interviews")).toBe("token-value");
   });
 
   it("buildApiUrl should append query params and skip empty values", () => {
@@ -147,7 +157,7 @@ describe("request utilities", () => {
   it("buildRequestPolicyKey should be stable for same semantic payload", () => {
     const keyA = buildRequestPolicyKey({
       method: "post",
-      url: "/xunzhi/v1/interview/sessions",
+      url: "/career/interviews",
       params: {
         page: 1,
         size: 20,
@@ -159,7 +169,7 @@ describe("request utilities", () => {
     });
     const keyB = buildRequestPolicyKey({
       method: "POST",
-      url: "/xunzhi/v1/interview/sessions",
+      url: "/career/interviews",
       params: {
         size: 20,
         page: 1,
