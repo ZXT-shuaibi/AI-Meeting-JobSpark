@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react";
 import AuthGuard from "@/components/auth/AuthGuard";
 import AppLayout from "@/layouts/AppLayout";
 import { ROUTES } from "@/lib/constants";
+import { useAppSelector } from "@/store/hooks";
 
 const AuthPage = lazy(() => import("@/pages/auth/AuthPage"));
 const MarketingHomePage = lazy(
@@ -43,6 +44,16 @@ const withRouteSuspense = (node: ReactNode) => (
   <Suspense fallback={<RouteLoadingScreen />}>{node}</Suspense>
 );
 
+function HomeRoute() {
+  const { isAuthenticated } = useAppSelector((state) => state.user);
+
+  if (isAuthenticated) {
+    return <Navigate to={ROUTES.career} replace />;
+  }
+
+  return withRouteSuspense(<MarketingHomePage />);
+}
+
 export const appRoutes: RouteObject[] = [
   {
     path: ROUTES.home,
@@ -50,7 +61,7 @@ export const appRoutes: RouteObject[] = [
     children: [
       {
         index: true,
-        element: withRouteSuspense(<MarketingHomePage />),
+        element: <HomeRoute />,
       },
       {
         path: ROUTES.auth,
@@ -80,7 +91,15 @@ export const appRoutes: RouteObject[] = [
             element: withRouteSuspense(<InterviewIntroPage />),
           },
           {
+            path: "/interview",
+            element: withRouteSuspense(<InterviewIntroPage />),
+          },
+          {
             path: ROUTES.interviewRoom,
+            element: withRouteSuspense(<InterviewPage />),
+          },
+          {
+            path: "/interview/room",
             element: withRouteSuspense(<InterviewPage />),
           },
           {
@@ -88,11 +107,23 @@ export const appRoutes: RouteObject[] = [
             element: withRouteSuspense(<InterviewPage />),
           },
           {
+            path: "/interview/room/:sessionId",
+            element: withRouteSuspense(<InterviewPage />),
+          },
+          {
             path: ROUTES.interviewReport,
             element: withRouteSuspense(<InterviewReportPage />),
           },
           {
+            path: "/interview/report",
+            element: withRouteSuspense(<InterviewReportPage />),
+          },
+          {
             path: ROUTES.interviewReportDetail,
+            element: withRouteSuspense(<InterviewReportDetailPage />),
+          },
+          {
+            path: "/interview/report/detail",
             element: withRouteSuspense(<InterviewReportDetailPage />),
           },
           {
@@ -104,7 +135,15 @@ export const appRoutes: RouteObject[] = [
             element: withRouteSuspense(<ResumeListPage />),
           },
           {
+            path: "/resume/list",
+            element: withRouteSuspense(<ResumeListPage />),
+          },
+          {
             path: ROUTES.resumeUpload,
+            element: withRouteSuspense(<ResumeUploadPage />),
+          },
+          {
+            path: "/resume/upload",
             element: withRouteSuspense(<ResumeUploadPage />),
           },
           {
@@ -112,7 +151,15 @@ export const appRoutes: RouteObject[] = [
             element: withRouteSuspense(<ResumeOptimizePage />),
           },
           {
+            path: "/resume/optimize",
+            element: withRouteSuspense(<ResumeOptimizePage />),
+          },
+          {
             path: ROUTES.resumeDetail,
+            element: withRouteSuspense(<ResumeDetailPage />),
+          },
+          {
+            path: "/resume/detail",
             element: withRouteSuspense(<ResumeDetailPage />),
           },
           {

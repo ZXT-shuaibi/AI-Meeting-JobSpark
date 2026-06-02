@@ -74,7 +74,7 @@ export function useAuthPageController() {
     if (isAuthenticated) {
       const redirectState = location.state as AuthRedirectState | null;
       const redirectPath =
-        normalizeInAppRedirect(redirectState?.from) ?? ROUTES.home;
+        normalizeInAppRedirect(redirectState?.from) ?? ROUTES.career;
       navigate(redirectPath, { replace: true });
     }
     return () => {

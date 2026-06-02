@@ -114,7 +114,7 @@ describe("useAuthPageController redirect", () => {
     });
   });
 
-  it("falls back to / when from path is unsafe", async () => {
+  it("falls back to /career when from path is unsafe", async () => {
     useLocationMock.mockReturnValue({
       state: {
         from: {
@@ -126,7 +126,7 @@ describe("useAuthPageController redirect", () => {
     renderController();
 
     await waitFor(() => {
-      expect(navigateMock).toHaveBeenCalledWith(ROUTES.home, {
+      expect(navigateMock).toHaveBeenCalledWith(ROUTES.career, {
         replace: true,
       });
     });

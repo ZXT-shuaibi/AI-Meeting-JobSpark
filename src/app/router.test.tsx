@@ -1,7 +1,16 @@
 import { render, screen } from "@testing-library/react";
 import { Outlet, RouterProvider, createMemoryRouter } from "react-router-dom";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { appRoutes } from "@/app/router";
+import { ROUTES } from "@/lib/constants";
+
+const useAppSelectorMock = vi.fn();
+
+vi.mock("@/store/hooks", () => ({
+  useAppSelector: (
+    selector: (state: { user: { isAuthenticated: boolean } }) => unknown,
+  ) => useAppSelectorMock(selector),
+}));
 
 vi.mock("@/layouts/AppLayout", () => ({
   default: function MockAppLayout() {
@@ -80,9 +89,15 @@ vi.mock("@/pages/interview/InterviewReportPage", () => ({
 }));
 
 describe("appRoutes", () => {
-  it("loads the marketing home route lazily", async () => {
+  beforeEach(() => {
+    useAppSelectorMock.mockImplementation((selector) =>
+      selector({ user: { isAuthenticated: false } }),
+    );
+  });
+
+  it("keeps / on the marketing home when the user is not authenticated", async () => {
     const router = createMemoryRouter(appRoutes, {
-      initialEntries: ["/"],
+      initialEntries: [ROUTES.home],
     });
 
     render(<RouterProvider router={router} />);
@@ -91,9 +106,24 @@ describe("appRoutes", () => {
     expect(screen.getByTestId("app-layout")).toBeDefined();
   });
 
+  it("redirects authenticated users from / to /career", async () => {
+    useAppSelectorMock.mockImplementation((selector) =>
+      selector({ user: { isAuthenticated: true } }),
+    );
+
+    const router = createMemoryRouter(appRoutes, {
+      initialEntries: [ROUTES.home],
+    });
+
+    render(<RouterProvider router={router} />);
+
+    expect(await screen.findByText("resume-list-page")).toBeDefined();
+    expect(router.state.location.pathname).toBe(ROUTES.career);
+  });
+
   it("loads the auth route lazily", async () => {
     const router = createMemoryRouter(appRoutes, {
-      initialEntries: ["/auth"],
+      initialEntries: [ROUTES.auth],
     });
 
     render(<RouterProvider router={router} />);
@@ -103,6 +133,10 @@ describe("appRoutes", () => {
   });
 
   it("loads authenticated chat routes lazily", async () => {
+    useAppSelectorMock.mockImplementation((selector) =>
+      selector({ user: { isAuthenticated: true } }),
+    );
+
     const router = createMemoryRouter(appRoutes, {
       initialEntries: ["/chat/session-1"],
     });
@@ -114,7 +148,7 @@ describe("appRoutes", () => {
 
   it("loads public preview resume routes without authentication", async () => {
     const router = createMemoryRouter(appRoutes, {
-      initialEntries: ["/preview/resume/list"],
+      initialEntries: [ROUTES.previewResumeList],
     });
 
     render(<RouterProvider router={router} />);
