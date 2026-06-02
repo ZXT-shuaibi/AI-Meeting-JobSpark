@@ -17,11 +17,22 @@ const normalizeString = (value: unknown): string => {
   return value.trim();
 };
 
+const resolvePacketText = (
+  payload: HireSparkTranscriptionPacketDto,
+): string => {
+  const text = normalizeString(payload.text);
+  if (text.length > 0) {
+    return text;
+  }
+
+  return normalizeString(payload.data);
+};
+
 export const mapHireSparkTranscriptionPacket = (
   payload: HireSparkTranscriptionPacketDto,
 ): HireSparkTranscriptionEvent => {
   const type = normalizeString(payload.type).toLowerCase();
-  const text = normalizeString(payload.text || payload.data);
+  const text = resolvePacketText(payload);
 
   if (type === "start" || type === "transcription_started") {
     return {

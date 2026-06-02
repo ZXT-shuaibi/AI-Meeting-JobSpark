@@ -22,6 +22,8 @@ const normalizeString = (value: unknown): string | null => {
   return null;
 };
 
+const DONE_EVENTS = new Set(["done", "message_end"]);
+
 const normalizeBoolean = (value: unknown): boolean => value === true;
 
 const extractText = (value: unknown): string | null => {
@@ -44,12 +46,16 @@ const extractText = (value: unknown): string | null => {
 
 export const mapHireSparkStreamEvent = (
   payload: HireSparkStreamEventDto,
-): HireSparkStreamEvent => ({
-  event:
+): HireSparkStreamEvent => {
+  const event =
     normalizeString(payload.event) ??
     normalizeString(payload.type) ??
-    "message",
-  text: extractText(payload.data),
-  done: normalizeBoolean(payload.done),
-  payload: payload.data ?? null,
-});
+    "message";
+
+  return {
+    event,
+    text: extractText(payload.data),
+    done: normalizeBoolean(payload.done) || DONE_EVENTS.has(event),
+    payload: payload.data ?? null,
+  };
+};
