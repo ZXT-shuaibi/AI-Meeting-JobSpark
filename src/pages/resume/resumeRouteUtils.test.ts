@@ -37,4 +37,16 @@ describe("resumeRouteUtils", () => {
       }),
     ).toBe("resume-99");
   });
+
+  it("falls back to the legacy query id when the compatibility detail path is used", () => {
+    expect(
+      getResumeVersionIdFromRoute({
+        pathname: "/career/resumes/detail",
+        params: {
+          resumeVersionId: "detail",
+        },
+        search: "?id=resume-42",
+      }),
+    ).toBe("resume-42");
+  });
 });

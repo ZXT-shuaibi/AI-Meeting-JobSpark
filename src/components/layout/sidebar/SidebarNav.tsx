@@ -13,9 +13,11 @@ export default function SidebarNav({ isCollapsed }: SidebarNavProps) {
   const location = useLocation();
   const isActive = (path: string) =>
     location.pathname === path || location.pathname.startsWith(`${path}/`);
-  const isCareerActive = isActive(ROUTES.career);
   const isResumeActive =
-    isCareerActive || location.pathname.startsWith("/resume");
+    location.pathname === ROUTES.career ||
+    location.pathname.startsWith("/career/resumes") ||
+    location.pathname.startsWith("/career/optimizations") ||
+    location.pathname.startsWith("/resume");
 
   return (
     <div className="px-3">

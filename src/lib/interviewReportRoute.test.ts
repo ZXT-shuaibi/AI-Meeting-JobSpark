@@ -20,4 +20,14 @@ describe("interviewReportRoute", () => {
       }),
     ).toBe("session-1");
   });
+
+  it("falls back to the legacy query sessionId when the compatibility detail path is used", () => {
+    expect(
+      getReportSessionIdFromLocation({
+        pathname: "/career/interview-reports/detail",
+        state: null,
+        search: "?sessionId=session-2",
+      }),
+    ).toBe("session-2");
+  });
 });

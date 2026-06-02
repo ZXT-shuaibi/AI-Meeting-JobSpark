@@ -41,13 +41,13 @@ export const getResumeVersionIdFromRoute = ({
   search?: string;
 }) => {
   const paramResumeVersionId = params?.resumeVersionId?.trim() || "";
-  if (paramResumeVersionId) {
+  if (paramResumeVersionId && paramResumeVersionId !== "detail") {
     return paramResumeVersionId;
   }
 
   const pathnameMatch = pathname.match(/^\/career\/resumes\/([^/?#]+)$/u);
   const pathnameResumeVersionId = pathnameMatch?.[1]?.trim() || "";
-  if (pathnameResumeVersionId) {
+  if (pathnameResumeVersionId && pathnameResumeVersionId !== "detail") {
     return decodeURIComponent(pathnameResumeVersionId);
   }
 

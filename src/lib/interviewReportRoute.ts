@@ -13,7 +13,7 @@ export const getReportSessionIdFromLocation = (location: {
     /^\/career\/interview-reports\/([^/?#]+)$/u,
   );
   const pathnameSessionId = pathMatch?.[1]?.trim() || "";
-  if (pathnameSessionId) {
+  if (pathnameSessionId && pathnameSessionId !== "detail") {
     return decodeURIComponent(pathnameSessionId);
   }
 
