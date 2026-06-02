@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ROUTES } from "@/lib/constants";
+import { buildInterviewReportDetailPath } from "@/lib/interviewReportRoute";
 import { AUTO_SAVE_SUCCESS_TEXT } from "@/hooks/interview/session/interviewSessionFlow.shared";
 import { useInterviewSessionFlow } from "@/hooks/interview/session/useInterviewSessionFlow";
 
@@ -346,7 +346,7 @@ describe("useInterviewSessionFlow", () => {
     expect(invalidateQueriesMock).toHaveBeenCalled();
   });
 
-  it("clears the stored session and navigates to the report page with sessionId on end", async () => {
+  it("clears the stored session and navigates to the report detail page on end", async () => {
     useParamsMock.mockReturnValue({
       sessionId: "session-1",
     });
@@ -369,7 +369,7 @@ describe("useInterviewSessionFlow", () => {
     expect(storageState.setInterviewerSessionId).toHaveBeenCalledWith(null);
     expect(storageState.clearStoredSession).toHaveBeenCalledTimes(1);
     expect(navigateMock).toHaveBeenCalledWith(
-      `${ROUTES.interviewReport}?sessionId=session-1`,
+      buildInterviewReportDetailPath("session-1"),
       {
         state: {
           sessionId: "session-1",

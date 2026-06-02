@@ -94,7 +94,7 @@ export default function InterviewIntroPage() {
                 className="rounded-full"
                 variant={latestActiveSession ? "outline" : "default"}
               >
-                <Link to="/interview/room">
+                <Link to={ROUTES.interviewIntro}>
                   {introCopy.startButton}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>

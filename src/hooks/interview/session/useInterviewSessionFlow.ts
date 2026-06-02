@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { buildInterviewRoomPath, ROUTES } from "@/lib/constants";
-import { buildReportSearch } from "@/lib/interviewReportRoute";
+import { buildInterviewReportDetailPath } from "@/lib/interviewReportRoute";
 import { CHAT_MESSAGE_VARIANT } from "@/lib/chat";
 import {
   buildInterviewProgressPatch,
@@ -275,7 +275,9 @@ export function useInterviewSessionFlow(user: InterviewFlowUser) {
       resetProgressState();
       resetAutoSaveAttempt();
       navigate(
-        `${ROUTES.interviewReport}${buildReportSearch(reportSessionId)}`,
+        reportSessionId
+          ? buildInterviewReportDetailPath(reportSessionId)
+          : ROUTES.interviewReport,
         {
           state: reportSessionId ? { sessionId: reportSessionId } : undefined,
         },

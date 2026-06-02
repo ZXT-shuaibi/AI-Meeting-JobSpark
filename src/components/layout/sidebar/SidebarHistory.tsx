@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ROUTES } from "@/lib/constants";
 import {
-  buildReportSearch,
+  buildInterviewReportDetailPath,
   getReportSessionIdFromLocation,
 } from "@/lib/interviewReportRoute";
 import SidebarInterviewList from "@/components/layout/sidebar/SidebarInterviewList";
@@ -86,12 +86,9 @@ export default function SidebarHistory({ isCollapsed }: SidebarHistoryProps) {
               hasNextPage={hasNextInterviewPage}
               isFetchingNextPage={isFetchingNextInterviewPage}
               onOpenRecord={(sessionId) =>
-                navigate(
-                  `${ROUTES.interviewReport}${buildReportSearch(sessionId)}`,
-                  {
-                    state: { sessionId },
-                  },
-                )
+                navigate(buildInterviewReportDetailPath(sessionId), {
+                  state: { sessionId },
+                })
               }
             />
           )}
