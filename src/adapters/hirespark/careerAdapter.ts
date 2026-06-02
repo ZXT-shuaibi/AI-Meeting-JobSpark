@@ -38,7 +38,7 @@ export interface HireSparkCareerInterviewSessionDto {
 export interface CareerInterviewSessionModel {
   id: string | null;
   status: string;
-  currentTurnNo: number;
+  currentTurnNo: number | null;
   currentQuestion: string | null;
 }
 
@@ -53,7 +53,7 @@ const normalizeString = (value: unknown): string | null => {
   return null;
 };
 
-const normalizeStatus = (value: unknown, fallback = "pending") =>
+const normalizeStatus = (value: unknown, fallback = "UNKNOWN") =>
   normalizeString(value) ?? fallback;
 
 const normalizeNumber = (value: unknown): number | null => {
@@ -123,6 +123,6 @@ export const mapCareerInterviewSession = (
 ): CareerInterviewSessionModel => ({
   id: normalizeString(payload.id),
   status: normalizeStatus(payload.status),
-  currentTurnNo: normalizeNumber(payload.currentTurnNo) ?? 0,
+  currentTurnNo: normalizeNumber(payload.currentTurnNo),
   currentQuestion: normalizeString(payload.currentQuestion),
 });

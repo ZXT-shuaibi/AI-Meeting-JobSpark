@@ -29,7 +29,7 @@ describe("careerAdapter", () => {
       }),
     ).toEqual({
       id: "task-1",
-      status: "pending",
+      status: "UNKNOWN",
       qualityScore: null,
       suggestions: [],
     });
@@ -42,8 +42,8 @@ describe("careerAdapter", () => {
       }),
     ).toEqual({
       id: "session-1",
-      status: "pending",
-      currentTurnNo: 0,
+      status: "UNKNOWN",
+      currentTurnNo: null,
       currentQuestion: null,
     });
   });
