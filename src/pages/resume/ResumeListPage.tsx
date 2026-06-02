@@ -36,23 +36,23 @@ export default function ResumeListPage() {
 
             <div className="space-y-3">
               <h1 className="text-4xl font-semibold tracking-tight text-slate-950">
-                绠€鍘嗗伐浣滃彴
+                简历工作台
               </h1>
               <p className="max-w-2xl text-base leading-7 text-slate-500">
-                绠＄悊绠€鍘嗙増鏈€佽ˉ鍏呯洰鏍囧矖浣嶏紝骞惰繘鍏ュ畾鍚戜紭鍖栦笌妯℃嫙闈㈣瘯銆?
+                管理简历版本、补充目标岗位，并进入定向优化与模拟面试。
               </p>
             </div>
 
             <div className="flex flex-wrap gap-3">
               <Button asChild className="rounded-full">
                 <Link to={routeSet.upload}>
-                  涓婁紶鏂扮畝鍘?
+                  上传新简历
                   <Upload className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
               <Button asChild variant="outline" className="rounded-full">
                 <Link to={optimizeHref}>
-                  缁х画浼樺寲
+                  继续优化
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
@@ -60,19 +60,19 @@ export default function ResumeListPage() {
 
             <div className="grid gap-4 md:grid-cols-3">
               <MetricCard
-                label="褰撳墠绠€鍘?"
+                label="当前简历"
                 value={String(resumeCards.length)}
-                description="鍙户缁紪杈戞垨瀹氬悜浼樺寲鐨勭増鏈?"
+                description="可继续编辑或定向优化的版本"
               />
               <MetricCard
-                label="妯℃澘璧勪骇"
+                label="模板资产"
                 value={String(excellentResumeCards.length)}
-                description="鍙揩閫熷€熼壌鐨勫弬鑰冩ā鏉?"
+                description="可快速借鉴的参考模板"
               />
               <MetricCard
-                label="鏈€杩戝緱鍒?"
+                label="最近得分"
                 value={String(optimizationOverview.score)}
-                description="鏈€杩戜竴杞矖浣嶅尮閰嶅垎鏋愮粨鏋?"
+                description="最近一轮岗位匹配分析结果"
               />
             </div>
           </section>
@@ -80,25 +80,25 @@ export default function ResumeListPage() {
           <aside className="rounded-[28px] border border-slate-200 bg-slate-50 p-6">
             <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
               <Star className="h-4 w-4 text-amber-500" />
-              鎺ㄨ崘璺緞
+              推荐路径
             </div>
             <div className="mt-5 space-y-3">
               <QuickAction
-                title="瀵煎叆鐜版湁绠€鍘?"
-                description="鍏堟妸鏈湴绠€鍘嗘帴鍏ュ伐浣滃彴锛屽啀琛ュ厖鐩爣宀椾綅銆?"
+                title="导入现有简历"
+                description="先把本地简历接入工作台，再补充目标岗位。"
                 to={routeSet.upload}
               />
               <QuickAction
-                title="缁х画瀹氬悜浼樺寲"
-                description="鍥寸粫鐩爣 JD 鏌ョ湅鍖归厤搴︺€佺己鍙ｄ笌寤鸿鏀瑰啓銆?"
+                title="继续定向优化"
+                description="围绕目标 JD 查看匹配度、缺口与建议改写。"
                 to={optimizeHref}
               />
               <QuickAction
-                title={isPreview ? "鏌ョ湅绠€鍘嗚鎯?" : "杩涘叆妯℃嫙闈㈣瘯"}
+                title={isPreview ? "查看简历详情" : "进入模拟面试"}
                 description={
                   isPreview
-                    ? "鍦ㄦ棤鐧诲綍棰勮璺緞涓户缁煡鐪嬬畝鍘嗙粨鏋勪笌鍐呭灞傜骇銆?"
-                    : "鍦ㄧ畝鍘嗕紭鍖栧悗缁х画楠岃瘉琛ㄨ揪銆侀」鐩彊杩颁笌宀椾綅鍖归厤銆?"
+                    ? "在无登录预览路径中继续查看简历结构与内容层级。"
+                    : "在简历优化后继续验证表达、项目叙述与岗位匹配。"
                 }
                 to={
                   isPreview
@@ -114,15 +114,15 @@ export default function ResumeListPage() {
           <div className="flex items-center justify-between gap-4">
             <div>
               <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
-                鎴戠殑绠€鍘?
+                我的简历
               </h2>
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                閫夋嫨涓€涓増鏈户缁紭鍖栵紝鎴栬繘鍏ヨ鎯呴〉鏌ョ湅褰撳墠琛ㄨ揪缁撴瀯銆?
+                选择一个版本继续优化，或进入详情页查看当前表达结构。
               </p>
             </div>
             <Button asChild variant="outline" className="rounded-full">
               <Link to={routeSet.upload}>
-                鏂板缓绠€鍘?
+                新建简历
                 <FilePlus2 className="ml-2 h-4 w-4" />
               </Link>
             </Button>
@@ -152,7 +152,7 @@ export default function ResumeListPage() {
 
                 {resume.targetRole ? (
                   <p className="mt-4 text-sm text-slate-500">
-                    {`目标方向：${resume.targetRole}`}
+                    目标方向：{resume.targetRole}
                   </p>
                 ) : null}
 
@@ -172,12 +172,12 @@ export default function ResumeListPage() {
                     <Link
                       to={buildResumeDetailPath(routeSet.detail, resume.id)}
                     >
-                      鏌ョ湅璇︽儏
+                      查看详情
                     </Link>
                   </Button>
                   <Button asChild className="rounded-full">
                     <Link to={`${routeSet.optimize}?id=${resume.id}`}>
-                      杩涘叆浼樺寲
+                      进入优化
                     </Link>
                   </Button>
                 </div>
@@ -189,10 +189,10 @@ export default function ResumeListPage() {
         <section className="mt-12">
           <div>
             <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
-              鍙傝€冩ā鏉?
+              参考模板
             </h2>
             <p className="mt-2 text-sm leading-6 text-slate-500">
-              鍙綔涓虹粨鏋勫€熼壌锛岀敤鏉ュ己鍖栫粨鏋滆〃杈俱€佸矖浣嶅叧閿瘝涓庨」鐩彊杩般€?
+              可作为结构借鉴，用来强化结果表达、岗位关键词与项目叙述。
             </p>
           </div>
 
