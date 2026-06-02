@@ -13,11 +13,17 @@ export default function SidebarNav({ isCollapsed }: SidebarNavProps) {
   const location = useLocation();
   const isActive = (path: string) =>
     location.pathname === path || location.pathname.startsWith(`${path}/`);
+  const isLegacyInterviewActive =
+    location.pathname === "/interview" ||
+    location.pathname.startsWith("/interview/");
   const isResumeActive =
     location.pathname === ROUTES.career ||
     location.pathname.startsWith("/career/resumes") ||
     location.pathname.startsWith("/career/optimizations") ||
+    location.pathname.startsWith("/career/resume") ||
     location.pathname.startsWith("/resume");
+  const isInterviewActive =
+    isActive(ROUTES.interviewIntro) || isLegacyInterviewActive;
 
   return (
     <div className="px-3">
@@ -50,7 +56,7 @@ export default function SidebarNav({ isCollapsed }: SidebarNavProps) {
 
         <Link to={ROUTES.interviewIntro}>
           <Button
-            variant={isActive(ROUTES.interviewIntro) ? "secondary" : "ghost"}
+            variant={isInterviewActive ? "secondary" : "ghost"}
             className={cn(
               "w-full rounded-full",
               isCollapsed ? "justify-center" : "justify-start",

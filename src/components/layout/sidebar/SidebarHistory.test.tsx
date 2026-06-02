@@ -1,11 +1,13 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import SidebarHistory from "@/components/layout/sidebar/SidebarHistory";
 
 const navigateMock = vi.fn();
 const useLocationMock = vi.fn();
 const controllerMock = vi.fn();
+const sidebarInterviewListMock = vi.fn();
 
 vi.mock("react-router-dom", async () => {
   const actual =
@@ -40,7 +42,10 @@ vi.mock("@/components/layout/sidebar/SidebarSessionList", () => ({
 vi.mock("@/components/layout/sidebar/SidebarInterviewList", () => ({
   default: function MockSidebarInterviewList(props: {
     onOpenRecord: (sessionId: string) => void;
+    activeSessionId?: string | null;
+    activePathname: string;
   }) {
+    sidebarInterviewListMock(props);
     return (
       <button type="button" onClick={() => props.onOpenRecord("session-1")}>
         open-record
@@ -84,6 +89,27 @@ describe("SidebarHistory", () => {
       {
         state: { sessionId: "session-1" },
       },
+    );
+  });
+
+  it("keeps the legacy report detail page tied to the active interview record", () => {
+    useLocationMock.mockReturnValue({
+      pathname: "/interview/report/detail",
+      search: "?sessionId=session-legacy",
+      state: null,
+    });
+
+    render(
+      <MemoryRouter>
+        <SidebarHistory />
+      </MemoryRouter>,
+    );
+
+    expect(sidebarInterviewListMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        activePathname: "/interview/report/detail",
+        activeSessionId: "session-legacy",
+      }),
     );
   });
 });

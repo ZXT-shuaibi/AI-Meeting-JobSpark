@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import {
   buildInterviewReportDetailPath,
   getReportSessionIdFromLocation,
@@ -29,5 +30,15 @@ describe("interviewReportRoute", () => {
         search: "?sessionId=session-2",
       }),
     ).toBe("session-2");
+  });
+
+  it("reads the sessionId from the true legacy report detail query route", () => {
+    expect(
+      getReportSessionIdFromLocation({
+        pathname: "/interview/report/detail",
+        state: null,
+        search: "?sessionId=session-legacy",
+      }),
+    ).toBe("session-legacy");
   });
 });

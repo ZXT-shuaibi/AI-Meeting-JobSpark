@@ -19,4 +19,31 @@ describe("SidebarNav", () => {
       "bg-secondary",
     );
   });
+
+  it("keeps the AI interview nav active on the legacy interview entry", () => {
+    render(
+      <MemoryRouter initialEntries={["/interview"]}>
+        <SidebarNav />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("button", { name: "AI 面试" }).className).toContain(
+      "bg-secondary",
+    );
+  });
+
+  it("keeps the AI interview nav active on legacy interview report pages", () => {
+    render(
+      <MemoryRouter initialEntries={["/interview/report"]}>
+        <SidebarNav />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("button", { name: "AI 面试" }).className).toContain(
+      "bg-secondary",
+    );
+    expect(
+      screen.getByRole("button", { name: "简历工作台" }).className,
+    ).not.toContain("bg-secondary");
+  });
 });

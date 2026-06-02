@@ -30,9 +30,11 @@ export default function SidebarHistory({ isCollapsed }: SidebarHistoryProps) {
     handleScroll,
   } = useSidebarHistoryController(isCollapsed);
 
-  const activeInterviewSessionId = location.pathname.startsWith(
-    ROUTES.interviewReport,
-  )
+  const isInterviewReportRoute =
+    location.pathname.startsWith(ROUTES.interviewReport) ||
+    location.pathname.startsWith("/interview/report");
+
+  const activeInterviewSessionId = isInterviewReportRoute
     ? getReportSessionIdFromLocation(location)
     : null;
 
