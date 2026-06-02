@@ -1,4 +1,5 @@
 import { renderHook, waitFor } from "@testing-library/react";
+import { act } from "react";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
 import type { ReactNode } from "react";
@@ -7,7 +8,11 @@ import { ROUTES } from "@/lib/constants";
 import { authService } from "@/services/authService";
 import { useAuthPageController } from "@/hooks/auth/useAuthPageController";
 import chatReducer from "@/store/slices/chatSlice";
-import userReducer from "@/store/slices/userSlice";
+import {
+  logoutUser,
+  loginUser,
+  default as userReducer,
+} from "@/store/slices/userSlice";
 
 const navigateMock = vi.fn();
 const useLocationMock = vi.fn();
@@ -77,7 +82,10 @@ const renderController = () => {
     <Provider store={store}>{children}</Provider>
   );
 
-  return renderHook(() => useAuthPageController(), { wrapper });
+  return {
+    store,
+    ...renderHook(() => useAuthPageController(), { wrapper }),
+  };
 };
 
 describe("useAuthPageController redirect", () => {
@@ -119,6 +127,22 @@ describe("useAuthPageController redirect", () => {
         replace: true,
       });
     });
+  });
+
+  it("keeps registration unavailable in the controller flow", async () => {
+    useLocationMock.mockReturnValue({ state: null });
+
+    const { result } = renderController();
+
+    act(() => {
+      result.current.switchMode("register");
+    });
+
+    expect(result.current.mode).toBe("login");
+    expect(result.current.isLogin).toBe(true);
+    expect(result.current.localError).toBe(
+      "Registration is not available in this phase.",
+    );
   });
 });
 
@@ -177,6 +201,26 @@ describe("authService auth alignment", () => {
     });
   });
 
+  it("clears the stored token when /user/me fails after login", async () => {
+    servicePostMock.mockResolvedValueOnce({
+      userId: "7",
+      role: "candidate",
+      token: "token-123",
+      avatar: "avatar-login.png",
+    });
+    serviceGetMock.mockRejectedValueOnce(new Error("me failed"));
+
+    await expect(
+      authService.login({
+        username: "tester",
+        password: "secret",
+      }),
+    ).rejects.toThrow("me failed");
+
+    expect(setAuthTokenMock).toHaveBeenCalledWith("token-123");
+    expect(clearAuthTokenMock).toHaveBeenCalledTimes(1);
+  });
+
   it("logs out via /auth/logout and clears the stored token", async () => {
     servicePostMock.mockResolvedValueOnce(null);
 
@@ -184,5 +228,58 @@ describe("authService auth alignment", () => {
 
     expect(servicePostMock).toHaveBeenCalledWith("/auth/logout");
     expect(clearAuthTokenMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("userSlice auth consistency", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("clears redux auth state when logout fails after token cleanup", async () => {
+    useLocationMock.mockReturnValue({ state: null });
+    servicePostMock.mockRejectedValueOnce(new Error("logout failed"));
+    const store = createStore();
+
+    await store.dispatch(logoutUser());
+
+    expect(clearAuthTokenMock).toHaveBeenCalledTimes(1);
+    expect(store.getState().user).toMatchObject({
+      isAuthenticated: false,
+      currentUser: null,
+      error: "logout failed",
+    });
+    expect(store.getState().user.authEpoch).toBe(2);
+  });
+
+  it("keeps redux unauthenticated when login fails after fetching the token", async () => {
+    useLocationMock.mockReturnValue({ state: null });
+    servicePostMock.mockResolvedValueOnce({
+      userId: "9",
+      role: "candidate",
+      token: "token-xyz",
+      avatar: "avatar-login.png",
+    });
+    serviceGetMock.mockRejectedValueOnce(new Error("me failed"));
+    const store = configureStore({
+      reducer: {
+        user: userReducer,
+        chat: chatReducer,
+      },
+    });
+
+    await store.dispatch(
+      loginUser({
+        username: "tester",
+        password: "secret",
+      }),
+    );
+
+    expect(clearAuthTokenMock).toHaveBeenCalledTimes(1);
+    expect(store.getState().user).toMatchObject({
+      isAuthenticated: false,
+      currentUser: null,
+      error: "me failed",
+    });
   });
 });

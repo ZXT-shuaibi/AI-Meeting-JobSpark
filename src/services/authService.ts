@@ -112,7 +112,12 @@ export const authService = {
     }
 
     setAuthToken(token);
-    return authService.checkLogin();
+    try {
+      return await authService.checkLogin();
+    } catch (error) {
+      clearAuthToken();
+      throw error;
+    }
   },
 
   register: async (data: UserRegisterReqDTO) => {
