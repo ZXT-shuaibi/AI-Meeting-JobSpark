@@ -17,18 +17,51 @@ vi.mock("@/lib/authToken", () => ({
 }));
 
 describe("request utilities", () => {
-  it("把 career 路径拼到 /api/ragent 下", () => {
-    expect(buildApiUrl("/career/interviews")).toContain(
+  it("buildApiUrl should prefix HireSpark endpoints with /api/ragent exactly", () => {
+    expect(buildApiUrl("/career/interviews")).toBe(
       "/api/ragent/career/interviews",
     );
   });
 
-  it("auth/login 不要求已登录 token", () => {
+  it("auth/login does not require token", () => {
     expect(requiresAuthTokenForRequest("/auth/login")).toBe(false);
   });
 
-  it("career 接口要求 token", () => {
+  it("career endpoint requires token", () => {
     expect(requiresAuthTokenForRequest("/career/interviews")).toBe(true);
+  });
+
+  it("requires auth token for absolute HireSpark protected urls", () => {
+    expect(
+      requiresAuthTokenForRequest("https://host/api/ragent/career/interviews"),
+    ).toBe(true);
+  });
+
+  it("requires auth token for absolute legacy protected urls", () => {
+    expect(
+      requiresAuthTokenForRequest(
+        "https://host/xunzhi/v1/interview/sessions/abc/next-question",
+      ),
+    ).toBe(true);
+  });
+
+  it("does not require auth token for legacy public user endpoints", () => {
+    expect(requiresAuthTokenForRequest("/xunzhi/v1/users/login")).toBe(false);
+    expect(requiresAuthTokenForRequest("/xunzhi/v1/users/register")).toBe(
+      false,
+    );
+    expect(requiresAuthTokenForRequest("/xunzhi/v1/users/check-login")).toBe(
+      false,
+    );
+    expect(requiresAuthTokenForRequest("/xunzhi/v1/users/logout")).toBe(false);
+  });
+
+  it("requires auth token for legacy protected interview endpoints", () => {
+    expect(
+      requiresAuthTokenForRequest(
+        "/xunzhi/v1/interview/sessions/abc/next-question",
+      ),
+    ).toBe(true);
   });
 
   it("requires auth token for protected business endpoints", () => {
