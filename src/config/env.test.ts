@@ -3,6 +3,7 @@ import {
   resolveApiBaseUrl,
   resolveAppEnv,
   resolveRuntimeWsBaseUrl,
+  resolveStaticPreviewEnabled,
   resolveWsBaseUrl,
 } from "@/config/env";
 
@@ -17,6 +18,14 @@ describe("env utilities", () => {
     expect(env.apiBaseUrl).toBe("/api");
     expect(env.apiTarget).toBe("http://localhost:8002");
     expect(env.wsBaseUrl).toBeNull();
+    expect(env.staticPreviewEnabled).toBe(false);
+  });
+
+  it("resolveStaticPreviewEnabled should parse boolean-like values", () => {
+    expect(resolveStaticPreviewEnabled("true")).toBe(true);
+    expect(resolveStaticPreviewEnabled("1")).toBe(true);
+    expect(resolveStaticPreviewEnabled("false")).toBe(false);
+    expect(resolveStaticPreviewEnabled(undefined)).toBe(false);
   });
 
   it("resolveWsBaseUrl should normalize configured value", () => {

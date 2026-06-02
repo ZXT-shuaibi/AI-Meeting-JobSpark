@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
-import { MessageSquare, Video } from "lucide-react";
+import { FileText, MessageSquare, Video } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -11,10 +12,8 @@ type SidebarNavProps = {
 export default function SidebarNav({ isCollapsed }: SidebarNavProps) {
   const location = useLocation();
   const isActive = (path: string) =>
-    path === ROUTES.chat
-      ? location.pathname === ROUTES.chat ||
-        location.pathname.startsWith(`${ROUTES.chat}/`)
-      : location.pathname === path;
+    location.pathname === path || location.pathname.startsWith(`${path}/`);
+  const isResumeActive = location.pathname.startsWith("/resume");
 
   return (
     <div className="px-3">
@@ -28,7 +27,20 @@ export default function SidebarNav({ isCollapsed }: SidebarNavProps) {
             )}
           >
             <MessageSquare className={cn("h-4 w-4", !isCollapsed && "mr-2")} />
-            {!isCollapsed && "新对话"}
+            {!isCollapsed && "\u65b0\u5bf9\u8bdd"}
+          </Button>
+        </Link>
+
+        <Link to={ROUTES.resumeList}>
+          <Button
+            variant={isResumeActive ? "secondary" : "ghost"}
+            className={cn(
+              "w-full rounded-full",
+              isCollapsed ? "justify-center" : "justify-start",
+            )}
+          >
+            <FileText className={cn("h-4 w-4", !isCollapsed && "mr-2")} />
+            {!isCollapsed && "\u7b80\u5386\u5de5\u4f5c\u53f0"}
           </Button>
         </Link>
 
@@ -41,7 +53,7 @@ export default function SidebarNav({ isCollapsed }: SidebarNavProps) {
             )}
           >
             <Video className={cn("h-4 w-4", !isCollapsed && "mr-2")} />
-            {!isCollapsed && "AI 面试"}
+            {!isCollapsed && "AI \u9762\u8bd5"}
           </Button>
         </Link>
       </div>

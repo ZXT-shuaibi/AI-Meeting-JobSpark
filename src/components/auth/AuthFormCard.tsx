@@ -1,10 +1,10 @@
-import { Link } from "react-router-dom";
 import { Loader2 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 import { ROUTES } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import type {
   AuthFormData,
   AuthMode,
@@ -15,6 +15,7 @@ type AuthFormCardProps = {
   formData: AuthFormData;
   errorMessage: string;
   isSubmitting: boolean;
+  showPreviewEntry?: boolean;
   onSwitchMode: (mode: AuthMode) => void;
   onInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onSubmit: () => void;
@@ -25,6 +26,7 @@ export default function AuthFormCard({
   formData,
   errorMessage,
   isSubmitting,
+  showPreviewEntry = false,
   onSwitchMode,
   onInputChange,
   onSubmit,
@@ -32,7 +34,7 @@ export default function AuthFormCard({
   const isLogin = mode === "login";
 
   return (
-    <Card className="p-8 border-slate-100 shadow-sm">
+    <Card className="border-slate-100 p-8 shadow-sm">
       <div className="flex items-center gap-2 rounded-full bg-slate-100 p-1">
         <Button
           type="button"
@@ -72,7 +74,7 @@ export default function AuthFormCard({
             onChange={onInputChange}
           />
         </div>
-        {!isLogin && (
+        {!isLogin ? (
           <div className="space-y-2">
             <label className="text-xs text-slate-500">确认密码</label>
             <Input
@@ -83,21 +85,27 @@ export default function AuthFormCard({
               onChange={onInputChange}
             />
           </div>
-        )}
+        ) : null}
 
-        {errorMessage && (
-          <div className="text-xs text-red-500 mt-2">{errorMessage}</div>
-        )}
+        {errorMessage ? (
+          <div className="mt-2 text-xs text-red-500">{errorMessage}</div>
+        ) : null}
       </div>
 
       <Button
-        className="w-full mt-6 rounded-full"
+        className="mt-6 w-full rounded-full"
         onClick={onSubmit}
         disabled={isSubmitting}
       >
-        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
         {isLogin ? "登录进入" : "注册并开始"}
       </Button>
+
+      {showPreviewEntry ? (
+        <Button asChild variant="outline" className="mt-3 w-full rounded-full">
+          <Link to={ROUTES.previewResumeList}>直接查看内部预览</Link>
+        </Button>
+      ) : null}
 
       <div className="mt-4 flex items-center justify-between text-xs text-slate-400">
         <span>登录即代表同意服务条款与隐私政策</span>

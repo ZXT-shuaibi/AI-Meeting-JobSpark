@@ -1,11 +1,18 @@
 export type AppEnvSource = Partial<
-  Record<"VITE_API_BASE_URL" | "VITE_API_TARGET" | "VITE_WS_BASE_URL", string>
+  Record<
+    | "VITE_API_BASE_URL"
+    | "VITE_API_TARGET"
+    | "VITE_WS_BASE_URL"
+    | "VITE_STATIC_PREVIEW",
+    string
+  >
 >;
 
 export type ResolvedAppEnv = {
   apiBaseUrl: string;
   apiTarget: string;
   wsBaseUrl: string | null;
+  staticPreviewEnabled: boolean;
 };
 
 const DEFAULT_API_BASE_URL = "/api";
@@ -31,6 +38,11 @@ export const resolveWsBaseUrl = (value?: string | null) => {
     return null;
   }
   return normalizeBaseUrl(trimmed);
+};
+
+export const resolveStaticPreviewEnabled = (value?: string | null) => {
+  const normalized = trimValue(value).toLowerCase();
+  return normalized === "true" || normalized === "1";
 };
 
 type LocationLike = {
@@ -59,5 +71,9 @@ export const resolveAppEnv = (source: AppEnvSource = getMetaEnvSource()) => {
     apiBaseUrl: resolveApiBaseUrl(source.VITE_API_BASE_URL),
     apiTarget: resolveApiTarget(source.VITE_API_TARGET),
     wsBaseUrl: resolveWsBaseUrl(source.VITE_WS_BASE_URL),
+    staticPreviewEnabled: resolveStaticPreviewEnabled(source.VITE_STATIC_PREVIEW),
   } satisfies ResolvedAppEnv;
 };
+
+export const isStaticPreviewEnabled = (source?: AppEnvSource) =>
+  resolveAppEnv(source).staticPreviewEnabled;

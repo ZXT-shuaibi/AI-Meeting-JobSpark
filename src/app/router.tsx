@@ -14,6 +14,12 @@ const MarketingHomePage = lazy(
   () => import("@/pages/marketing/MarketingHomePage"),
 );
 const ChatPage = lazy(() => import("@/pages/chat/ChatPage"));
+const ResumeListPage = lazy(() => import("@/pages/resume/ResumeListPage"));
+const ResumeUploadPage = lazy(() => import("@/pages/resume/ResumeUploadPage"));
+const ResumeOptimizePage = lazy(
+  () => import("@/pages/resume/ResumeOptimizePage"),
+);
+const ResumeDetailPage = lazy(() => import("@/pages/resume/ResumeDetailPage"));
 const InterviewIntroPage = lazy(
   () => import("@/pages/interview/InterviewIntroPage"),
 );
@@ -51,6 +57,22 @@ export const appRoutes: RouteObject[] = [
         element: withRouteSuspense(<AuthPage />),
       },
       {
+        path: ROUTES.previewResumeList,
+        element: withRouteSuspense(<ResumeListPage />),
+      },
+      {
+        path: ROUTES.previewResumeUpload,
+        element: withRouteSuspense(<ResumeUploadPage />),
+      },
+      {
+        path: ROUTES.previewResumeOptimize,
+        element: withRouteSuspense(<ResumeOptimizePage />),
+      },
+      {
+        path: ROUTES.previewResumeDetail,
+        element: withRouteSuspense(<ResumeDetailPage />),
+      },
+      {
         element: <AuthGuard />,
         children: [
           {
@@ -76,6 +98,22 @@ export const appRoutes: RouteObject[] = [
           {
             path: `${ROUTES.chat}/:sessionId?`,
             element: withRouteSuspense(<ChatPage />),
+          },
+          {
+            path: ROUTES.resumeList,
+            element: withRouteSuspense(<ResumeListPage />),
+          },
+          {
+            path: ROUTES.resumeUpload,
+            element: withRouteSuspense(<ResumeUploadPage />),
+          },
+          {
+            path: ROUTES.resumeOptimize,
+            element: withRouteSuspense(<ResumeOptimizePage />),
+          },
+          {
+            path: ROUTES.resumeDetail,
+            element: withRouteSuspense(<ResumeDetailPage />),
           },
           {
             path: ROUTES.questionBank,

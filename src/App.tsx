@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { RouterProvider } from "react-router-dom";
 import { appRouter } from "@/app/router";
+import { isStaticPreviewEnabled } from "@/config/env";
 import { useAppDispatch } from "@/store/hooks";
 import { checkAuthStatus } from "@/store/slices/userSlice";
 import { Loader2 } from "lucide-react";
@@ -12,6 +13,11 @@ function App() {
 
   useEffect(() => {
     const initAuth = async () => {
+      if (isStaticPreviewEnabled()) {
+        setIsInitializing(false);
+        return;
+      }
+
       const token = getAuthToken();
       if (!token) {
         setIsInitializing(false);

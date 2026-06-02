@@ -37,6 +37,30 @@ vi.mock("@/pages/chat/ChatPage", () => ({
   },
 }));
 
+vi.mock("@/pages/resume/ResumeListPage", () => ({
+  default: function MockResumeListPage() {
+    return <div>resume-list-page</div>;
+  },
+}));
+
+vi.mock("@/pages/resume/ResumeUploadPage", () => ({
+  default: function MockResumeUploadPage() {
+    return <div>resume-upload-page</div>;
+  },
+}));
+
+vi.mock("@/pages/resume/ResumeOptimizePage", () => ({
+  default: function MockResumeOptimizePage() {
+    return <div>resume-optimize-page</div>;
+  },
+}));
+
+vi.mock("@/pages/resume/ResumeDetailPage", () => ({
+  default: function MockResumeDetailPage() {
+    return <div>resume-detail-page</div>;
+  },
+}));
+
 vi.mock("@/pages/interview/InterviewIntroPage", () => ({
   default: function MockInterviewIntroPage() {
     return <div>interview-intro-page</div>;
@@ -86,5 +110,16 @@ describe("appRoutes", () => {
     render(<RouterProvider router={router} />);
 
     expect(await screen.findByText("chat-page")).toBeDefined();
+  });
+
+  it("loads public preview resume routes without authentication", async () => {
+    const router = createMemoryRouter(appRoutes, {
+      initialEntries: ["/preview/resume/list"],
+    });
+
+    render(<RouterProvider router={router} />);
+
+    expect(await screen.findByText("resume-list-page")).toBeDefined();
+    expect(screen.getByTestId("app-layout")).toBeDefined();
   });
 });

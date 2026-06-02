@@ -1,8 +1,13 @@
 import AuthMarketingPanel from "@/components/auth/AuthMarketingPanel";
 import AuthFormCard from "@/components/auth/AuthFormCard";
+import { isStaticPreviewEnabled } from "@/config/env";
 import { useAuthPageController } from "@/hooks/auth/useAuthPageController";
+import { Navigate } from "react-router-dom";
+import { ROUTES } from "@/lib/constants";
 
 export default function AuthPage() {
+  const isPreview = isStaticPreviewEnabled();
+
   const {
     mode,
     formData,
@@ -14,6 +19,10 @@ export default function AuthPage() {
     handleInputChange,
     handleSubmit,
   } = useAuthPageController();
+
+  if (isPreview) {
+    return <Navigate to={ROUTES.previewResumeList} replace />;
+  }
 
   return (
     <div className="h-full w-full bg-white relative overflow-hidden flex items-center justify-center px-6 py-10">
@@ -31,6 +40,7 @@ export default function AuthPage() {
           formData={formData}
           errorMessage={error || localError}
           isSubmitting={loading || registerLoading}
+          showPreviewEntry={isPreview}
           onSwitchMode={switchMode}
           onInputChange={handleInputChange}
           onSubmit={handleSubmit}
