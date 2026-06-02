@@ -1,5 +1,5 @@
 import service from "@/lib/request";
-import { clearAuthToken, setAuthToken } from "@/lib/authToken";
+import { clearAuthToken, getAuthToken, setAuthToken } from "@/lib/authToken";
 import { AppError, ErrorCode } from "@/lib/errors";
 import type {
   AuthPayloadDTO,
@@ -115,7 +115,9 @@ export const authService = {
     try {
       return await authService.checkLogin();
     } catch (error) {
-      clearAuthToken();
+      if (getAuthToken() === token) {
+        clearAuthToken();
+      }
       throw error;
     }
   },

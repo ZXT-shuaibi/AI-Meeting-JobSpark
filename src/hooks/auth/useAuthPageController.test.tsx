@@ -19,6 +19,7 @@ const useLocationMock = vi.fn();
 const servicePostMock = vi.fn();
 const serviceGetMock = vi.fn();
 const clearAuthTokenMock = vi.fn();
+const getAuthTokenMock = vi.fn();
 const setAuthTokenMock = vi.fn();
 
 vi.mock("@/lib/request", () => ({
@@ -30,6 +31,7 @@ vi.mock("@/lib/request", () => ({
 
 vi.mock("@/lib/authToken", () => ({
   clearAuthToken: () => clearAuthTokenMock(),
+  getAuthToken: () => getAuthTokenMock(),
   setAuthToken: (...args: unknown[]) => setAuthTokenMock(...args),
 }));
 
@@ -91,6 +93,7 @@ const renderController = () => {
 describe("useAuthPageController redirect", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getAuthTokenMock.mockReturnValue(null);
   });
 
   it("redirects to the in-app from path after login", async () => {
@@ -209,6 +212,7 @@ describe("authService auth alignment", () => {
       avatar: "avatar-login.png",
     });
     serviceGetMock.mockRejectedValueOnce(new Error("me failed"));
+    getAuthTokenMock.mockReturnValue("token-123");
 
     await expect(
       authService.login({
@@ -219,6 +223,27 @@ describe("authService auth alignment", () => {
 
     expect(setAuthTokenMock).toHaveBeenCalledWith("token-123");
     expect(clearAuthTokenMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not clear a newer token when /user/me fails for an older login", async () => {
+    servicePostMock.mockResolvedValueOnce({
+      userId: "7",
+      role: "candidate",
+      token: "token-123",
+      avatar: "avatar-login.png",
+    });
+    serviceGetMock.mockRejectedValueOnce(new Error("me failed"));
+    getAuthTokenMock.mockReturnValue("token-456");
+
+    await expect(
+      authService.login({
+        username: "tester",
+        password: "secret",
+      }),
+    ).rejects.toThrow("me failed");
+
+    expect(setAuthTokenMock).toHaveBeenCalledWith("token-123");
+    expect(clearAuthTokenMock).not.toHaveBeenCalled();
   });
 
   it("logs out via /auth/logout and clears the stored token", async () => {
@@ -261,6 +286,7 @@ describe("userSlice auth consistency", () => {
       avatar: "avatar-login.png",
     });
     serviceGetMock.mockRejectedValueOnce(new Error("me failed"));
+    getAuthTokenMock.mockReturnValue("token-xyz");
     const store = configureStore({
       reducer: {
         user: userReducer,
