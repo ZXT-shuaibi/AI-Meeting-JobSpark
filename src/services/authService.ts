@@ -30,7 +30,7 @@ const toString = (value: unknown): string | undefined => {
   return undefined;
 };
 
-const normalizeUser = (raw: unknown): UserRespDTO | null => {
+const normalizeLegacyUser = (raw: unknown): UserRespDTO | null => {
   if (!isRecord(raw)) return null;
 
   const username = toString(raw.username) || "";
@@ -50,11 +50,38 @@ const normalizeUser = (raw: unknown): UserRespDTO | null => {
   };
 };
 
+const normalizeCurrentUser = (raw: unknown): UserRespDTO | null => {
+  if (!isRecord(raw)) return null;
+
+  const username = toString(raw.username) || toString(raw.userId) || "";
+  if (!username) return null;
+
+  return {
+    id: toNumber(raw.id ?? raw.userId),
+    username,
+    realName: toString(raw.realName ?? raw.real_name),
+    phone: toString(raw.phone),
+    mail: toString(raw.mail),
+    avatar: toString(raw.avatar),
+    deletionTime: toNumber(raw.deletionTime ?? raw.deletion_time),
+    createTime: toString(raw.createTime ?? raw.create_time),
+    updateTime: toString(raw.updateTime ?? raw.update_time),
+    delFlag: toNumber(raw.delFlag ?? raw.del_flag) as 0 | 1 | undefined,
+  };
+};
+
 const extractUserFromAuthPayload = (payload: unknown): UserRespDTO | null => {
-  const direct = normalizeUser(payload);
+  const direct = normalizeCurrentUser(payload) || normalizeLegacyUser(payload);
   if (direct) return direct;
   if (!isRecord(payload)) return null;
-  return normalizeUser(payload.user) || normalizeUser(payload.currentUser);
+  return (
+    normalizeCurrentUser(payload.user) ||
+    normalizeCurrentUser(payload.currentUser) ||
+    normalizeCurrentUser(payload.data) ||
+    normalizeLegacyUser(payload.user) ||
+    normalizeLegacyUser(payload.currentUser) ||
+    normalizeLegacyUser(payload.data)
+  );
 };
 
 const extractTokenFromAuthPayload = (payload: unknown): string | null => {
@@ -78,38 +105,23 @@ const extractTokenFromAuthPayload = (payload: unknown): string | null => {
 
 export const authService = {
   login: async (data: UserLoginReqDTO) => {
-    const payload = await service.post<AuthPayloadDTO>(
-      "/xunzhi/v1/users/login",
-      data,
-    );
+    const payload = await service.post<AuthPayloadDTO>("/auth/login", data);
     const token = extractTokenFromAuthPayload(payload);
-    if (token) {
-      setAuthToken(token);
-    }
-
-    const user = extractUserFromAuthPayload(payload);
-    if (!user) {
-      throw new Error("Login succeeded but user info is missing");
-    }
     if (!token) {
       throw new Error("Login succeeded but token is missing");
     }
-    return user;
+
+    setAuthToken(token);
+    return authService.checkLogin();
   },
 
-  register: (data: UserRegisterReqDTO) => {
-    return service.post<ResultVoid>("/xunzhi/v1/users/register", data);
+  register: async (data: UserRegisterReqDTO) => {
+    void data;
+    throw new Error("Registration is not available in this phase.");
   },
 
   checkLogin: async () => {
-    const payload = await service.get<AuthPayloadDTO>(
-      "/xunzhi/v1/users/check-login",
-    );
-    const token = extractTokenFromAuthPayload(payload);
-    if (token) {
-      setAuthToken(token);
-    }
-
+    const payload = await service.get<AuthPayloadDTO>("/user/me");
     const user = extractUserFromAuthPayload(payload);
     if (!user) {
       throw new AppError(ErrorCode.UNAUTHORIZED, "User is not logged in");
@@ -119,7 +131,7 @@ export const authService = {
 
   logout: async () => {
     try {
-      return await service.post<ResultVoid>("/xunzhi/v1/users/logout");
+      return await service.post<ResultVoid>("/auth/logout");
     } finally {
       clearAuthToken();
     }
