@@ -52,7 +52,7 @@ describe("request utilities", () => {
       e: null,
     });
 
-    expect(url).toContain("/api/hello");
+    expect(url).toContain("/api/ragent/hello");
     expect(url).toContain("a=1");
     expect(url).toContain("b=true");
     expect(url).not.toContain("c=");
