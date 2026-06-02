@@ -1,17 +1,24 @@
 import type { ReactNode } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 
 import { resumeDetails } from "./resumeMockData";
-import { getResumeRouteSet } from "./resumeRouteUtils";
+import {
+  getResumeRouteSet,
+  getResumeVersionIdFromRoute,
+} from "./resumeRouteUtils";
 
 export default function ResumeDetailPage() {
   const location = useLocation();
+  const params = useParams<{ resumeVersionId?: string }>();
   const routeSet = getResumeRouteSet(location.pathname);
-  const [searchParams] = useSearchParams();
-  const currentId = searchParams.get("id");
+  const currentId = getResumeVersionIdFromRoute({
+    pathname: location.pathname,
+    params,
+    search: location.search,
+  });
   const resume = resumeDetails.find((item) => item.id === currentId);
 
   if (!resume) {
@@ -19,7 +26,9 @@ export default function ResumeDetailPage() {
       <div className="h-full overflow-y-auto bg-white">
         <div className="mx-auto max-w-3xl px-6 py-16">
           <div className="rounded-[32px] border border-slate-200 bg-slate-50 p-8 text-center">
-            <p className="text-sm font-medium tracking-[0.16em] text-slate-400">简历上下文缺失</p>
+            <p className="text-sm font-medium tracking-[0.16em] text-slate-400">
+              简历上下文缺失
+            </p>
             <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
               这个预览入口需要先选中一份简历
             </h1>
@@ -41,7 +50,11 @@ export default function ResumeDetailPage() {
     <div className="h-full overflow-y-auto bg-white">
       <div className="mx-auto max-w-6xl px-6 py-10">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <Button asChild variant="ghost" className="rounded-full px-3 text-slate-500">
+          <Button
+            asChild
+            variant="ghost"
+            className="rounded-full px-3 text-slate-500"
+          >
             <Link to={routeSet.list}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               返回简历列表
@@ -59,9 +72,13 @@ export default function ResumeDetailPage() {
         <div className="mt-6 grid gap-8 lg:grid-cols-[0.88fr_1.12fr]">
           <aside className="space-y-4">
             <div className="rounded-[30px] border border-slate-200 bg-slate-50 p-6">
-              <p className="text-3xl font-semibold tracking-tight text-slate-950">{resume.name}</p>
+              <p className="text-3xl font-semibold tracking-tight text-slate-950">
+                {resume.name}
+              </p>
               <p className="mt-2 text-base text-slate-600">{resume.title}</p>
-              <p className="mt-4 text-sm leading-7 text-slate-500">{resume.contactLine}</p>
+              <p className="mt-4 text-sm leading-7 text-slate-500">
+                {resume.contactLine}
+              </p>
               <div className="mt-4 rounded-[20px] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
                 目标方向：{resume.targetRole}
               </div>
@@ -69,7 +86,9 @@ export default function ResumeDetailPage() {
 
             <div className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-sm">
               <p className="text-sm font-semibold text-slate-900">个人摘要</p>
-              <p className="mt-3 text-sm leading-7 text-slate-600">{resume.summary}</p>
+              <p className="mt-3 text-sm leading-7 text-slate-600">
+                {resume.summary}
+              </p>
             </div>
 
             <div className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-sm">
@@ -116,7 +135,9 @@ export default function ResumeDetailPage() {
                   key={`${item.school}-${item.period}`}
                   className="rounded-[24px] border border-slate-200 bg-white p-5"
                 >
-                  <p className="text-base font-semibold text-slate-900">{item.school}</p>
+                  <p className="text-base font-semibold text-slate-900">
+                    {item.school}
+                  </p>
                   <p className="mt-2 text-sm text-slate-600">{item.degree}</p>
                   <p className="mt-2 text-sm text-slate-400">{item.period}</p>
                 </div>
@@ -138,7 +159,9 @@ function SectionBlock({
 }) {
   return (
     <div className="rounded-[30px] border border-slate-200 bg-slate-50 p-6">
-      <p className="text-xl font-semibold tracking-tight text-slate-900">{title}</p>
+      <p className="text-xl font-semibold tracking-tight text-slate-900">
+        {title}
+      </p>
       <div className="mt-5 space-y-4">{children}</div>
     </div>
   );

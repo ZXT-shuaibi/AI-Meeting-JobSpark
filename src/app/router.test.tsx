@@ -88,6 +88,12 @@ vi.mock("@/pages/interview/InterviewReportPage", () => ({
   },
 }));
 
+vi.mock("@/pages/interview/InterviewReportDetailPage", () => ({
+  default: function MockInterviewReportDetailPage() {
+    return <div>interview-report-detail-page</div>;
+  },
+}));
+
 describe("appRoutes", () => {
   beforeEach(() => {
     useAppSelectorMock.mockImplementation((selector) =>
@@ -144,6 +150,55 @@ describe("appRoutes", () => {
     render(<RouterProvider router={router} />);
 
     expect(await screen.findByText("chat-page")).toBeDefined();
+  });
+
+  it("matches the new /career/interviews/:sessionId route", async () => {
+    useAppSelectorMock.mockImplementation((selector) =>
+      selector({ user: { isAuthenticated: true } }),
+    );
+
+    const router = createMemoryRouter(appRoutes, {
+      initialEntries: ["/career/interviews/session-1"],
+    });
+
+    render(<RouterProvider router={router} />);
+
+    expect(await screen.findByText("interview-page")).toBeDefined();
+    expect(router.state.location.pathname).toBe("/career/interviews/session-1");
+  });
+
+  it("matches the new /career/interview-reports/:sessionId route", async () => {
+    useAppSelectorMock.mockImplementation((selector) =>
+      selector({ user: { isAuthenticated: true } }),
+    );
+
+    const router = createMemoryRouter(appRoutes, {
+      initialEntries: ["/career/interview-reports/session-1"],
+    });
+
+    render(<RouterProvider router={router} />);
+
+    expect(
+      await screen.findByText("interview-report-detail-page"),
+    ).toBeDefined();
+    expect(router.state.location.pathname).toBe(
+      "/career/interview-reports/session-1",
+    );
+  });
+
+  it("matches the new /career/resumes/:resumeVersionId route", async () => {
+    useAppSelectorMock.mockImplementation((selector) =>
+      selector({ user: { isAuthenticated: true } }),
+    );
+
+    const router = createMemoryRouter(appRoutes, {
+      initialEntries: ["/career/resumes/resume-1"],
+    });
+
+    render(<RouterProvider router={router} />);
+
+    expect(await screen.findByText("resume-detail-page")).toBeDefined();
+    expect(router.state.location.pathname).toBe("/career/resumes/resume-1");
   });
 
   it("loads public preview resume routes without authentication", async () => {

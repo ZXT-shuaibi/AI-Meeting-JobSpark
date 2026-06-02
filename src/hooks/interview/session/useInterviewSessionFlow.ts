@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { ROUTES } from "@/lib/constants";
+import { buildInterviewRoomPath, ROUTES } from "@/lib/constants";
 import { buildReportSearch } from "@/lib/interviewReportRoute";
 import { CHAT_MESSAGE_VARIANT } from "@/lib/chat";
 import {
@@ -63,12 +63,6 @@ export function useInterviewSessionFlow(user: InterviewFlowUser) {
 
   const isReady = Boolean(interviewerSessionId) && !isInterviewFinished;
 
-  const buildInterviewRoomPath = useCallback(
-    (sessionId: string) =>
-      `${ROUTES.interviewRoom}/${encodeURIComponent(sessionId)}`,
-    [],
-  );
-
   const invalidateInterviewRecords = useCallback(
     () =>
       queryClient.invalidateQueries({
@@ -84,9 +78,9 @@ export function useInterviewSessionFlow(user: InterviewFlowUser) {
         navigate(buildInterviewRoomPath(nextValue), { replace: true });
         return;
       }
-      navigate(ROUTES.interviewRoom, { replace: true });
+      navigate(ROUTES.interviewIntro, { replace: true });
     },
-    [buildInterviewRoomPath, navigate, persistInterviewerSessionId],
+    [navigate, persistInterviewerSessionId],
   );
 
   const clearInterviewError = useCallback(() => {

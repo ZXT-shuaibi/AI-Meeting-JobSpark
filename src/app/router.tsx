@@ -99,11 +99,11 @@ export const appRoutes: RouteObject[] = [
             element: withRouteSuspense(<InterviewPage />),
           },
           {
-            path: "/interview/room",
+            path: "/career/interviews/room",
             element: withRouteSuspense(<InterviewPage />),
           },
           {
-            path: `${ROUTES.interviewRoom}/:sessionId`,
+            path: "/interview/room",
             element: withRouteSuspense(<InterviewPage />),
           },
           {
@@ -120,6 +120,10 @@ export const appRoutes: RouteObject[] = [
           },
           {
             path: ROUTES.interviewReportDetail,
+            element: withRouteSuspense(<InterviewReportDetailPage />),
+          },
+          {
+            path: "/career/interview-reports/detail",
             element: withRouteSuspense(<InterviewReportDetailPage />),
           },
           {
@@ -156,6 +160,10 @@ export const appRoutes: RouteObject[] = [
           },
           {
             path: ROUTES.resumeDetail,
+            element: withRouteSuspense(<ResumeDetailPage />),
+          },
+          {
+            path: "/career/resumes/detail",
             element: withRouteSuspense(<ResumeDetailPage />),
           },
           {

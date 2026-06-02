@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ROUTES } from "@/lib/constants";
+import { buildInterviewRoomPath, ROUTES } from "@/lib/constants";
 import InterviewIntroHighlights from "@/components/interview/intro/InterviewIntroHighlights";
 import InterviewIntroStepsCard from "@/components/interview/intro/InterviewIntroStepsCard";
 import {
@@ -82,7 +82,7 @@ export default function InterviewIntroPage() {
               {latestActiveSession ? (
                 <Button asChild className="rounded-full">
                   <Link
-                    to={`${ROUTES.interviewRoom}/${encodeURIComponent(latestActiveSession.sessionId)}`}
+                    to={buildInterviewRoomPath(latestActiveSession.sessionId)}
                   >
                     {introCopy.continueButton}
                     <ArrowRight className="ml-2 h-4 w-4" />
@@ -94,13 +94,15 @@ export default function InterviewIntroPage() {
                 className="rounded-full"
                 variant={latestActiveSession ? "outline" : "default"}
               >
-                <Link to={ROUTES.interviewRoom}>
+                <Link to="/interview/room">
                   {introCopy.startButton}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
               <Button asChild variant="outline" className="rounded-full">
-                <Link to={ROUTES.interviewReport}>{introCopy.reportButton}</Link>
+                <Link to={ROUTES.interviewReport}>
+                  {introCopy.reportButton}
+                </Link>
               </Button>
             </div>
           </div>

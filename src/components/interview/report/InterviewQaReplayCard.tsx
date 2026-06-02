@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
 import {
+  buildInterviewReportDetailPath,
   buildReportSearch,
   getReportSessionIdFromLocation,
 } from "@/lib/interviewReportRoute";
@@ -47,7 +48,9 @@ export default function InterviewQaReplayCard({
   const isDetail = variant === "detail";
   const location = useLocation();
   const reportSessionId = getReportSessionIdFromLocation(location);
-  const detailLink = `${ROUTES.interviewReportDetail}${buildReportSearch(reportSessionId)}`;
+  const detailLink = reportSessionId
+    ? buildInterviewReportDetailPath(reportSessionId)
+    : `${ROUTES.interviewReportDetail}${buildReportSearch(reportSessionId)}`;
   const [expandedFeedbackMap, setExpandedFeedbackMap] = useState<
     Record<string, boolean>
   >({});

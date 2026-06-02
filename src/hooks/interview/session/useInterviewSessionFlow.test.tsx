@@ -377,4 +377,20 @@ describe("useInterviewSessionFlow", () => {
       },
     );
   });
+
+  it("navigates to /career/interviews/:sessionId when a session becomes active", async () => {
+    const { result } = renderSessionFlow();
+
+    await act(async () => {
+      result.current.setInterviewerSessionId("session-77");
+    });
+
+    expect(navigateMock).toHaveBeenCalledWith("/career/interviews/session-77", {
+      replace: true,
+    });
+    expect(navigateMock).not.toHaveBeenCalledWith(
+      expect.stringContaining(":sessionId"),
+      expect.anything(),
+    );
+  });
 });

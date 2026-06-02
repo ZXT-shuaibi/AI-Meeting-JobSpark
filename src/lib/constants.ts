@@ -2,14 +2,14 @@ export const ROUTES = {
   home: "/",
   career: "/career",
   interviewIntro: "/career/interviews",
-  interviewRoom: "/career/interviews/room",
+  interviewRoom: "/career/interviews/:sessionId",
   interviewReport: "/career/interview-reports",
-  interviewReportDetail: "/career/interview-reports/detail",
+  interviewReportDetail: "/career/interview-reports/:sessionId",
   chat: "/chat",
   resumeList: "/career",
   resumeUpload: "/career/resumes/upload",
   resumeOptimize: "/career/optimizations",
-  resumeDetail: "/career/resumes/detail",
+  resumeDetail: "/career/resumes/:resumeVersionId",
   questionBank: "/question-bank",
   questionBankManage: "/question-bank/manage",
   auth: "/auth",
@@ -18,6 +18,9 @@ export const ROUTES = {
   previewResumeOptimize: "/preview/resume/optimize",
   previewResumeDetail: "/preview/resume/detail",
 } as const;
+
+export const buildInterviewRoomPath = (sessionId: string) =>
+  ROUTES.interviewRoom.replace(":sessionId", encodeURIComponent(sessionId));
 
 export const CHAT_ROLES = {
   user: "user",
