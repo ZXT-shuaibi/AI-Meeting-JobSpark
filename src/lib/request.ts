@@ -66,6 +66,7 @@ const AUTH_FREE_API_PATHS = new Set([
   "/auth/logout",
   "/xunzhi/v1/users/login",
   "/xunzhi/v1/users/register",
+  "/xunzhi/v1/users/has-username",
   "/xunzhi/v1/users/check-login",
   "/xunzhi/v1/users/logout",
 ]);
