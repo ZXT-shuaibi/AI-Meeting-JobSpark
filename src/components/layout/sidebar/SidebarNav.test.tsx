@@ -20,6 +20,18 @@ describe("SidebarNav", () => {
     );
   });
 
+  it("keeps the AI interview nav active on the main-chain report pages", () => {
+    render(
+      <MemoryRouter initialEntries={["/career/interview-reports/session-1"]}>
+        <SidebarNav />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("button", { name: "AI 面试" }).className).toContain(
+      "bg-secondary",
+    );
+  });
+
   it("keeps the AI interview nav active on the legacy interview entry", () => {
     render(
       <MemoryRouter initialEntries={["/interview"]}>

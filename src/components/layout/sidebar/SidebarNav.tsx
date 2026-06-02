@@ -16,6 +16,7 @@ export default function SidebarNav({ isCollapsed }: SidebarNavProps) {
   const isLegacyInterviewActive =
     location.pathname === "/interview" ||
     location.pathname.startsWith("/interview/");
+  const isInterviewReportActive = isActive(ROUTES.interviewReport);
   const isResumeActive =
     location.pathname === ROUTES.career ||
     location.pathname.startsWith("/career/resumes") ||
@@ -23,7 +24,9 @@ export default function SidebarNav({ isCollapsed }: SidebarNavProps) {
     location.pathname.startsWith("/career/resume") ||
     location.pathname.startsWith("/resume");
   const isInterviewActive =
-    isActive(ROUTES.interviewIntro) || isLegacyInterviewActive;
+    isActive(ROUTES.interviewIntro) ||
+    isInterviewReportActive ||
+    isLegacyInterviewActive;
 
   return (
     <div className="px-3">
