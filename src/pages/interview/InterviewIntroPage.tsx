@@ -14,6 +14,8 @@ import {
   type InterviewConversationItem,
 } from "@/services/interviewService";
 
+const INTERVIEW_ROOM_ENTRY_PATH = "/career/interviews/room";
+
 const ACTIVE_INTERVIEW_STATUSES = new Set([
   "DRAFT",
   "RESUME_UPLOADING",
@@ -94,7 +96,7 @@ export default function InterviewIntroPage() {
                 className="rounded-full"
                 variant={latestActiveSession ? "outline" : "default"}
               >
-                <Link to={ROUTES.interviewIntro}>
+                <Link to={INTERVIEW_ROOM_ENTRY_PATH}>
                   {introCopy.startButton}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>

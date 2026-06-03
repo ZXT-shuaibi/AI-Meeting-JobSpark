@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { Outlet, RouterProvider, createMemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import { appRoutes } from "@/app/router";
 import { ROUTES } from "@/lib/constants";
 
@@ -165,6 +166,21 @@ describe("appRoutes", () => {
 
     expect(await screen.findByText("interview-page")).toBeDefined();
     expect(router.state.location.pathname).toBe("/career/interviews/session-1");
+  });
+
+  it("keeps /career/interviews/room reachable as the no-session interview entry", async () => {
+    useAppSelectorMock.mockImplementation((selector) =>
+      selector({ user: { isAuthenticated: true } }),
+    );
+
+    const router = createMemoryRouter(appRoutes, {
+      initialEntries: ["/career/interviews/room"],
+    });
+
+    render(<RouterProvider router={router} />);
+
+    expect(await screen.findByText("interview-page")).toBeDefined();
+    expect(router.state.location.pathname).toBe("/career/interviews/room");
   });
 
   it("matches the new /career/interview-reports/:sessionId route", async () => {

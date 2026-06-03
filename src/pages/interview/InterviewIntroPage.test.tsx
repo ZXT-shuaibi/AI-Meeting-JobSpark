@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
-import { ROUTES } from "@/lib/constants";
+
 import InterviewIntroPage from "@/pages/interview/InterviewIntroPage";
 
 vi.mock("@/components/interview/intro/InterviewIntroHighlights", () => ({
@@ -44,7 +44,7 @@ vi.mock("@/services/interviewService", () => ({
 }));
 
 describe("InterviewIntroPage", () => {
-  it("keeps the start interview entry on the /career interviews main chain", async () => {
+  it("routes the start interview entry to the reachable no-session interview room", async () => {
     render(
       <MemoryRouter>
         <InterviewIntroPage />
@@ -55,7 +55,7 @@ describe("InterviewIntroPage", () => {
       name: /start-interview/i,
     });
 
-    expect(startLink.getAttribute("href")).toBe(ROUTES.interviewIntro);
-    expect(startLink.getAttribute("href")).not.toBe("/interview/room");
+    expect(startLink.getAttribute("href")).toBe("/career/interviews/room");
+    expect(startLink.getAttribute("href")).not.toBe("/career/interviews");
   });
 });

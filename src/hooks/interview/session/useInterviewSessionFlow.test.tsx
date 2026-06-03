@@ -1,8 +1,9 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { buildInterviewReportDetailPath } from "@/lib/interviewReportRoute";
+
 import { AUTO_SAVE_SUCCESS_TEXT } from "@/hooks/interview/session/interviewSessionFlow.shared";
 import { useInterviewSessionFlow } from "@/hooks/interview/session/useInterviewSessionFlow";
+import { buildInterviewReportDetailPath } from "@/lib/interviewReportRoute";
 
 const navigateMock = vi.fn();
 const useParamsMock = vi.fn();
@@ -392,5 +393,17 @@ describe("useInterviewSessionFlow", () => {
       expect.stringContaining(":sessionId"),
       expect.anything(),
     );
+  });
+
+  it("navigates to the reachable no-session room when the session is cleared", async () => {
+    const { result } = renderSessionFlow();
+
+    await act(async () => {
+      result.current.setInterviewerSessionId(null);
+    });
+
+    expect(navigateMock).toHaveBeenCalledWith("/career/interviews/room", {
+      replace: true,
+    });
   });
 });
