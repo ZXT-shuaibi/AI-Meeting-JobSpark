@@ -2,6 +2,7 @@ export const ROUTES = {
   home: "/",
   career: "/career",
   interviewIntro: "/career/interviews",
+  interviewRoomEntry: "/career/interviews/room",
   interviewRoom: "/career/interviews/:sessionId",
   interviewReport: "/career/interview-reports",
   interviewReportDetail: "/career/interview-reports/:sessionId",

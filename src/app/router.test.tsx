@@ -174,13 +174,13 @@ describe("appRoutes", () => {
     );
 
     const router = createMemoryRouter(appRoutes, {
-      initialEntries: ["/career/interviews/room"],
+      initialEntries: [ROUTES.interviewRoomEntry],
     });
 
     render(<RouterProvider router={router} />);
 
     expect(await screen.findByText("interview-page")).toBeDefined();
-    expect(router.state.location.pathname).toBe("/career/interviews/room");
+    expect(router.state.location.pathname).toBe(ROUTES.interviewRoomEntry);
   });
 
   it("matches the new /career/interview-reports/:sessionId route", async () => {

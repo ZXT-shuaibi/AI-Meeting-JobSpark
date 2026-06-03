@@ -20,8 +20,6 @@ import { useInterviewSessionStorage } from "@/hooks/interview/session/useIntervi
 import { generateRequestId } from "@/hooks/interview/shared/interviewUtils";
 import { interviewService } from "@/services/interviewService";
 
-const INTERVIEW_ROOM_ENTRY_PATH = "/career/interviews/room";
-
 export function useInterviewSessionFlow(user: InterviewFlowUser) {
   const navigate = useNavigate();
   const params = useParams<{ sessionId?: string }>();
@@ -80,7 +78,7 @@ export function useInterviewSessionFlow(user: InterviewFlowUser) {
         navigate(buildInterviewRoomPath(nextValue), { replace: true });
         return;
       }
-      navigate(INTERVIEW_ROOM_ENTRY_PATH, { replace: true });
+      navigate(ROUTES.interviewRoomEntry, { replace: true });
     },
     [navigate, persistInterviewerSessionId],
   );

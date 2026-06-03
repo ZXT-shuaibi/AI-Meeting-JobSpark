@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AUTO_SAVE_SUCCESS_TEXT } from "@/hooks/interview/session/interviewSessionFlow.shared";
 import { useInterviewSessionFlow } from "@/hooks/interview/session/useInterviewSessionFlow";
+import { ROUTES } from "@/lib/constants";
 import { buildInterviewReportDetailPath } from "@/lib/interviewReportRoute";
 
 const navigateMock = vi.fn();
@@ -402,7 +403,7 @@ describe("useInterviewSessionFlow", () => {
       result.current.setInterviewerSessionId(null);
     });
 
-    expect(navigateMock).toHaveBeenCalledWith("/career/interviews/room", {
+    expect(navigateMock).toHaveBeenCalledWith(ROUTES.interviewRoomEntry, {
       replace: true,
     });
   });

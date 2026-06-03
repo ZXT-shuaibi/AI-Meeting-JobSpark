@@ -99,7 +99,7 @@ export const appRoutes: RouteObject[] = [
             element: withRouteSuspense(<InterviewPage />),
           },
           {
-            path: "/career/interviews/room",
+            path: ROUTES.interviewRoomEntry,
             element: withRouteSuspense(<InterviewPage />),
           },
           {
