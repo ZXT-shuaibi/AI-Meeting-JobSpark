@@ -18,11 +18,15 @@ import { ROUTES } from "@/lib/constants";
 import ResumeOptimizePage from "./ResumeOptimizePage";
 
 const {
+  mockCreateCareerInterview,
+  mockCreateCareerJob,
   mockCreateCareerOptimization,
   mockCreateCareerOptimizationProgressStream,
   mockGetCareerOptimizationTask,
   mockGetCareerResumeVersion,
 } = vi.hoisted(() => ({
+  mockCreateCareerInterview: vi.fn(),
+  mockCreateCareerJob: vi.fn(),
   mockCreateCareerOptimization: vi.fn(),
   mockCreateCareerOptimizationProgressStream: vi.fn(),
   mockGetCareerOptimizationTask: vi.fn(),
@@ -30,6 +34,8 @@ const {
 }));
 
 vi.mock("@/services/careerService", () => ({
+  createCareerInterview: mockCreateCareerInterview,
+  createCareerJob: mockCreateCareerJob,
   createCareerOptimization: mockCreateCareerOptimization,
   createCareerOptimizationProgressStream:
     mockCreateCareerOptimizationProgressStream,
@@ -39,6 +45,8 @@ vi.mock("@/services/careerService", () => ({
 
 describe("ResumeOptimizePage", () => {
   beforeEach(() => {
+    mockCreateCareerInterview.mockReset();
+    mockCreateCareerJob.mockReset();
     mockCreateCareerOptimization.mockReset();
     mockCreateCareerOptimizationProgressStream.mockReset();
     mockGetCareerOptimizationTask.mockReset();
@@ -49,32 +57,36 @@ describe("ResumeOptimizePage", () => {
     mockGetCareerResumeVersion.mockResolvedValue({
       id: "resume-real-1",
       profileId: "profile-1",
-      title: "高级前端工程师简历",
-      content: "真实简历正文",
-      markdownContent: "真实简历正文",
+      title: "resume title",
+      content: "resume body",
+      markdownContent: "resume body",
     });
     mockCreateCareerOptimization.mockResolvedValue({
       id: "task-123",
       status: "RUNNING",
       qualityScore: 71,
-      suggestions: ["补充量化结果", "突出跨团队协作"],
+      suggestions: ["Add quantified outcomes", "Highlight cross-team impact"],
     });
     mockGetCareerOptimizationTask.mockResolvedValue({
       id: "task-123",
       status: "SUCCEEDED",
       qualityScore: 88,
-      suggestions: ["补充量化结果", "突出跨团队协作", "前置岗位关键词"],
+      suggestions: [
+        "Add quantified outcomes",
+        "Highlight cross-team impact",
+        "Move job keywords upward",
+      ],
     });
     mockCreateCareerOptimizationProgressStream.mockImplementation(
       async (_taskId, handlers) => {
         handlers.onConnected?.({ event: "connected" });
         handlers.onProgress?.({
           eventType: "PROGRESS",
-          message: "正在生成优化建议",
+          message: "Generating optimization suggestions",
         });
         handlers.onDone?.({
           eventType: "DONE",
-          message: "优化完成",
+          message: "Optimization completed",
         });
         return {
           close: vi.fn(),
@@ -95,9 +107,9 @@ describe("ResumeOptimizePage", () => {
       </MemoryRouter>,
     );
 
-    expect(await screen.findByDisplayValue("真实简历正文")).toBeDefined();
+    expect(await screen.findByDisplayValue("resume body")).toBeDefined();
 
-    fireEvent.click(screen.getByRole("button", { name: "开始优化" }));
+    fireEvent.click(screen.getByTestId("resume-optimize-start-optimization"));
 
     await waitFor(() => {
       expect(mockCreateCareerOptimization).toHaveBeenCalledWith({
@@ -111,17 +123,19 @@ describe("ResumeOptimizePage", () => {
     await waitFor(() => {
       expect(screen.getAllByText("88").length).toBeGreaterThan(0);
     });
-    expect(await screen.findByText("正在生成优化建议")).toBeDefined();
-    expect(await screen.findByText("前置岗位关键词")).toBeDefined();
+    expect(
+      await screen.findByText("Generating optimization suggestions"),
+    ).toBeDefined();
+    expect(await screen.findByText("Move job keywords upward")).toBeDefined();
   });
 
   it("surfaces a refresh error after the optimization stream finishes", async () => {
     mockGetCareerResumeVersion.mockResolvedValue({
       id: "resume-real-1",
       profileId: "profile-1",
-      title: "高级前端工程师简历",
-      content: "真实简历正文",
-      markdownContent: "真实简历正文",
+      title: "resume title",
+      content: "resume body",
+      markdownContent: "resume body",
     });
     mockCreateCareerOptimization.mockResolvedValue({
       id: "task-123",
@@ -136,7 +150,7 @@ describe("ResumeOptimizePage", () => {
       async (_taskId, handlers) => {
         handlers.onDone?.({
           eventType: "DONE",
-          message: "优化完成",
+          message: "Optimization completed",
         });
         return {
           close: vi.fn(),
@@ -157,10 +171,81 @@ describe("ResumeOptimizePage", () => {
       </MemoryRouter>,
     );
 
-    await screen.findByDisplayValue("真实简历正文");
-    fireEvent.click(screen.getByRole("button", { name: "开始优化" }));
+    await screen.findByDisplayValue("resume body");
+    fireEvent.click(screen.getByTestId("resume-optimize-start-optimization"));
 
     expect(await screen.findByText("refresh failed")).toBeDefined();
+  });
+
+  it("creates a JD-backed interview session and navigates to the main-chain interview room", async () => {
+    mockGetCareerResumeVersion.mockResolvedValue({
+      id: "resume-real-1",
+      profileId: "profile-1",
+      title: "resume title",
+      content: "resume body",
+      markdownContent: "resume body",
+    });
+    mockCreateCareerJob.mockResolvedValue({
+      id: "job-001",
+    });
+    mockCreateCareerInterview.mockResolvedValue({
+      id: "session-001",
+      status: "CREATED",
+      currentTurnNo: 1,
+      currentQuestion: {
+        turnNo: 1,
+        question: "Tell me about your latest project.",
+      },
+    });
+
+    const router = createMemoryRouter(
+      [
+        {
+          path: ROUTES.resumeOptimize,
+          element: <ResumeOptimizePage />,
+        },
+        {
+          path: ROUTES.interviewRoom,
+          element: <div>interview-room-page</div>,
+        },
+      ],
+      {
+        initialEntries: [`${ROUTES.resumeOptimize}?id=resume-real-1`],
+      },
+    );
+
+    render(<RouterProvider router={router} />);
+
+    await screen.findByDisplayValue("resume body");
+    fireEvent.change(screen.getByTestId("resume-optimize-jd-textarea"), {
+      target: {
+        value: "Need React, TypeScript, and frontend platform experience.",
+      },
+    });
+
+    fireEvent.click(screen.getByTestId("resume-optimize-start-interview"));
+
+    await waitFor(() => {
+      expect(mockCreateCareerJob).toHaveBeenCalledWith({
+        rawText: "Need React, TypeScript, and frontend platform experience.",
+        sourceLocation: "",
+        sourceType: "MANUAL",
+      });
+    });
+
+    await waitFor(() => {
+      expect(mockCreateCareerInterview).toHaveBeenCalledWith(
+        "resume-real-1",
+        "job-001",
+      );
+    });
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe(
+        "/career/interviews/session-001",
+      );
+    });
+    expect(await screen.findByText("interview-room-page")).toBeDefined();
   });
 
   it("clears the previous optimization task and closes the old stream when switching to another resume id", async () => {
@@ -169,16 +254,16 @@ describe("ResumeOptimizePage", () => {
       .mockResolvedValueOnce({
         id: "resume-01",
         profileId: "profile-1",
-        title: "简历一",
-        content: "简历一正文",
-        markdownContent: "简历一正文",
+        title: "resume one",
+        content: "resume one body",
+        markdownContent: "resume one body",
       })
       .mockResolvedValueOnce({
         id: "resume-02",
         profileId: "profile-1",
-        title: "简历二",
-        content: "简历二正文",
-        markdownContent: "简历二正文",
+        title: "resume two",
+        content: "resume two body",
+        markdownContent: "resume two body",
       });
     mockCreateCareerOptimization.mockResolvedValue({
       id: "task-123",
@@ -204,15 +289,15 @@ describe("ResumeOptimizePage", () => {
 
     render(<RouterProvider router={router} />);
 
-    await screen.findByDisplayValue("简历一正文");
-    fireEvent.click(screen.getByRole("button", { name: "开始优化" }));
+    await screen.findByDisplayValue("resume one body");
+    fireEvent.click(screen.getByTestId("resume-optimize-start-optimization"));
     expect(await screen.findByText("task-123")).toBeDefined();
 
     await act(async () => {
       await router.navigate(`${ROUTES.resumeOptimize}?id=resume-02`);
     });
 
-    await screen.findByDisplayValue("简历二正文");
+    await screen.findByDisplayValue("resume two body");
 
     expect(closeStream).toHaveBeenCalledTimes(1);
     expect(screen.queryByText("task-123")).toBeNull();
@@ -242,10 +327,10 @@ describe("ResumeOptimizePage", () => {
     await screen.findByDisplayValue("mock");
 
     expect(
-      screen.getByRole("link", { name: "上传文件" }).getAttribute("href"),
+      screen.getByTestId("resume-optimize-upload-link").getAttribute("href"),
     ).toBe(ROUTES.previewResumeUpload);
     expect(
-      screen.getByRole("link", { name: "返回简历列表" }).getAttribute("href"),
+      screen.getByTestId("resume-optimize-back-link").getAttribute("href"),
     ).toBe(ROUTES.previewResumeList);
   });
 
@@ -266,21 +351,13 @@ describe("ResumeOptimizePage", () => {
     );
 
     expect(await screen.findByText("resume load failed")).toBeDefined();
+    expect(screen.queryByDisplayValue(/responsible for ai/i)).toBeNull();
     expect(
-      screen.queryByDisplayValue(/负责 AI 面试与简历联动平台的交互重组/),
-    ).toBeNull();
-    expect(
-      screen.queryByText(
-        "主导 AI 面试与简历联动平台工作台重构，串联上传、JD 对齐、优化反馈与训练复盘链路。",
-      ),
-    ).toBeNull();
-    expect(screen.queryByText("结果表达")).toBeNull();
-    expect(screen.queryByText("上传原始简历")).toBeNull();
-    expect(
-      screen.getByRole("button", { name: "开始优化" }).hasAttribute("disabled"),
+      (
+        screen.getByTestId(
+          "resume-optimize-start-optimization",
+        ) as HTMLButtonElement
+      ).disabled,
     ).toBe(true);
-    expect(
-      screen.getByText("优化任务完成后，这里会展示改写建议和评估结果。"),
-    ).toBeDefined();
   });
 });

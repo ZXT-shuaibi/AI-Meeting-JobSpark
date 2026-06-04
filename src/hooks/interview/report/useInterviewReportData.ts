@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+
 import {
   buildInterviewReportViewModel,
   fetchInterviewReportQueryData,
@@ -7,7 +8,7 @@ import {
 
 export function useInterviewReportData(reportSessionId: string | null) {
   const query = useQuery({
-    queryKey: ["interview-record", reportSessionId],
+    queryKey: ["interview-report", reportSessionId],
     enabled: Boolean(reportSessionId),
     queryFn: () => fetchInterviewReportQueryData(reportSessionId as string),
     retry: false,
@@ -16,15 +17,17 @@ export function useInterviewReportData(reportSessionId: string | null) {
   });
 
   const recordError = useMemo(() => {
-    if (!query.error) return null;
+    if (!query.error) {
+      return null;
+    }
     return query.error instanceof Error
       ? query.error.message
       : "加载面试报告时发生错误，请稍后重试。";
   }, [query.error]);
 
   const reportViewModel = useMemo(
-    () => buildInterviewReportViewModel(query.data?.record ?? null),
-    [query.data?.record],
+    () => buildInterviewReportViewModel(query.data?.report ?? null),
+    [query.data?.report],
   );
 
   return {

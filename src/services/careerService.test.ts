@@ -18,7 +18,11 @@ vi.mock("@/lib/request", () => ({
   buildApiUrl: mockBuildApiUrl,
 }));
 
-import { createCareerOptimizationProgressStream } from "./careerService";
+import {
+  createCareerInterviewProgressStream,
+  createCareerInterviewTranscriptionUrl,
+  createCareerOptimizationProgressStream,
+} from "./careerService";
 
 describe("careerService progress stream", () => {
   const originalFetch = global.fetch;
@@ -68,7 +72,7 @@ describe("careerService progress stream", () => {
       body: new ReadableStream({
         start(controller) {
           controller.enqueue(
-            encoder.encode('event: done\ndata: {"message":"优化完成"}'),
+            encoder.encode('event: done\ndata: {"message":"浼樺寲瀹屾垚"}'),
           );
           controller.close();
         },
@@ -86,8 +90,43 @@ describe("careerService progress stream", () => {
 
     expect(doneHandler).toHaveBeenCalledWith(
       expect.objectContaining({
-        message: "优化完成",
+        message: "浼樺寲瀹屾垚",
       }),
+    );
+  });
+
+  it("uses Bearer auth when subscribing to the interview progress stream", async () => {
+    const fetchMock = vi.fn(
+      () =>
+        new Promise<Response>(() => {
+          return;
+        }),
+    );
+    global.fetch = fetchMock as typeof fetch;
+    mockGetAuthToken.mockReturnValue("token-456");
+    mockBuildApiUrl.mockReturnValue(
+      "http://localhost:8080/career/interviews/session-1/progress/stream",
+    );
+
+    await createCareerInterviewProgressStream("session-1", {});
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://localhost:8080/career/interviews/session-1/progress/stream",
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Accept: "text/event-stream",
+          Authorization: "Bearer token-456",
+        }),
+      }),
+    );
+  });
+
+  it("builds the HireSpark interview transcription url with the session id and token query", () => {
+    mockGetAuthToken.mockReturnValue("token-789");
+    mockBuildApiUrl.mockReturnValue("http://localhost:8080");
+
+    expect(createCareerInterviewTranscriptionUrl("session-2")).toBe(
+      "ws://localhost:8080/career/interviews/session-2/transcription/ws?Authorization=token-789",
     );
   });
 });

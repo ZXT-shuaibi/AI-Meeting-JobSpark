@@ -14,10 +14,18 @@ import {
   Sparkles,
   UploadCloud,
 } from "lucide-react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 
+import { buildInterviewRoomPath } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import {
+  createCareerInterview,
+  createCareerJob,
   createCareerOptimization,
   createCareerOptimizationProgressStream,
   getCareerOptimizationTask,
@@ -73,6 +81,7 @@ function ResumeOptimizeWorkspace({
   isPreview: boolean;
   routeSet: ReturnType<typeof getResumeRouteSet>;
 }) {
+  const navigate = useNavigate();
   const mockResume = isPreview
     ? (resumeDetails.find((item) => item.id === currentId) ?? null)
     : null;
@@ -87,9 +96,13 @@ function ResumeOptimizeWorkspace({
     isPreview ? optimizeWorkspaceDraft.jdText : "",
   );
   const [isCreatingOptimization, setIsCreatingOptimization] = useState(false);
+  const [isCreatingInterview, setIsCreatingInterview] = useState(false);
   const [optimizationError, setOptimizationError] = useState<string | null>(
     null,
   );
+  const [interviewLaunchError, setInterviewLaunchError] = useState<
+    string | null
+  >(null);
   const [optimizationTask, setOptimizationTask] =
     useState<CareerOptimizationTask | null>(null);
   const [optimizationScopeId, setOptimizationScopeId] = useState<string | null>(
@@ -189,6 +202,10 @@ function ResumeOptimizeWorkspace({
   const canStartOptimization = isPreview
     ? Boolean(resolvedResumeId)
     : Boolean(resumeVersion?.id) && !resumeLoadError;
+  const canStartInterview =
+    canStartOptimization &&
+    Boolean(resolvedResumeId) &&
+    Boolean(jdText.trim() || jdLink.trim());
 
   const infoPills = useMemo(
     () => [
@@ -211,6 +228,7 @@ function ResumeOptimizeWorkspace({
     setOptimizationTask(null);
     setOptimizationError(null);
     setLatestProgressMessage(null);
+    setInterviewLaunchError(null);
     setIsCreatingOptimization(true);
 
     try {
@@ -283,6 +301,42 @@ function ResumeOptimizeWorkspace({
     }
   };
 
+  const handleStartInterview = async () => {
+    if (!resolvedResumeId || !canStartInterview) {
+      setInterviewLaunchError("请先补充目标 JD，再开始模拟面试。");
+      return;
+    }
+
+    setInterviewLaunchError(null);
+    setOptimizationError(null);
+    setIsCreatingInterview(true);
+
+    try {
+      const job = await createCareerJob({
+        rawText: jdText.trim(),
+        sourceLocation: jdLink.trim(),
+        sourceType: "MANUAL",
+      });
+
+      if (!job.id) {
+        throw new Error("Created job is missing id");
+      }
+
+      const session = await createCareerInterview(resolvedResumeId, job.id);
+      if (!session.id) {
+        throw new Error("Created interview session is missing id");
+      }
+
+      navigate(buildInterviewRoomPath(session.id));
+    } catch (error) {
+      setInterviewLaunchError(
+        error instanceof Error ? error.message : "Failed to start interview",
+      );
+    } finally {
+      setIsCreatingInterview(false);
+    }
+  };
+
   return (
     <div className="h-full overflow-y-auto bg-white">
       <div className="mx-auto max-w-6xl px-6 py-10">
@@ -291,7 +345,7 @@ function ResumeOptimizeWorkspace({
           variant="ghost"
           className="rounded-full px-3 text-slate-500"
         >
-          <Link to={routeSet.list}>
+          <Link to={routeSet.list} data-testid="resume-optimize-back-link">
             <ArrowLeft className="mr-2 h-4 w-4" />
             返回简历列表
           </Link>
@@ -331,6 +385,7 @@ function ResumeOptimizeWorkspace({
             <div className="flex flex-wrap gap-3">
               <Link
                 to={routeSet.upload}
+                data-testid="resume-optimize-upload-link"
                 className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700"
               >
                 <UploadCloud className="h-4 w-4" />
@@ -346,7 +401,7 @@ function ResumeOptimizeWorkspace({
                 htmlFor="resume-content"
                 className="text-sm font-semibold text-slate-900"
               >
-                简历内容
+                简历正文
               </label>
               <textarea
                 id="resume-content"
@@ -380,7 +435,7 @@ function ResumeOptimizeWorkspace({
           <WorkspacePanel
             eyebrow="目标岗位"
             title="JD 输入"
-            subtitle="当前先保留岗位链接和描述录入，Task 6 只接 resumeVersionId 与优化任务主链路。"
+            subtitle="这里同时承接岗位链接、岗位描述和启动模拟面试的主链路。"
           >
             <div className="space-y-2">
               <label
@@ -409,6 +464,7 @@ function ResumeOptimizeWorkspace({
               </label>
               <textarea
                 id="jd-content"
+                data-testid="resume-optimize-jd-textarea"
                 value={jdText}
                 onChange={(event) => setJdText(event.target.value)}
                 className="min-h-[248px] w-full rounded-[24px] border border-slate-200 bg-slate-50 px-5 py-4 text-sm leading-7 text-slate-700 outline-none transition focus:border-slate-300"
@@ -445,21 +501,46 @@ function ResumeOptimizeWorkspace({
                 {resolvedMatchSummary}
               </p>
             </div>
-            <Button
-              className="rounded-full px-5"
-              disabled={isCreatingOptimization || !canStartOptimization}
-              onClick={() => {
-                void handleStartOptimization();
-              }}
-            >
-              {isCreatingOptimization ? "创建中..." : "开始优化"}
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+            <div className="flex flex-wrap gap-3">
+              <Button
+                variant="outline"
+                className="rounded-full px-5"
+                data-testid="resume-optimize-start-interview"
+                disabled={isCreatingInterview || !canStartInterview}
+                onClick={() => {
+                  void handleStartInterview();
+                }}
+              >
+                {isCreatingInterview ? "创建中..." : "开始模拟面试"}
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+              <Button
+                className="rounded-full px-5"
+                data-testid="resume-optimize-start-optimization"
+                disabled={
+                  isCreatingOptimization ||
+                  isCreatingInterview ||
+                  !canStartOptimization
+                }
+                onClick={() => {
+                  void handleStartOptimization();
+                }}
+              >
+                {isCreatingOptimization ? "创建中..." : "开始优化"}
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           {resumeLoadError ? (
             <div className="mt-4 rounded-[24px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
               {resumeLoadError}
+            </div>
+          ) : null}
+
+          {interviewLaunchError ? (
+            <div className="mt-4 rounded-[24px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              {interviewLaunchError}
             </div>
           ) : null}
 
@@ -481,7 +562,7 @@ function ResumeOptimizeWorkspace({
                 <p className="mt-4 text-sm leading-7 text-slate-300">
                   {scopedLatestProgressMessage ||
                     scopedOptimizationTask?.riskSummary ||
-                    "当前版本已具备较强的岗位匹配基础，可进一步强化结果表达与 AI 能力拆解。"}
+                    "当前版本已经具备较强的岗位匹配基础，可进一步强化结果表达与 AI 能力拆解。"}
                 </p>
               </div>
 
