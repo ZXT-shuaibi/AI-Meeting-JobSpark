@@ -1,13 +1,13 @@
-import {
-  generateCareerInterviewReport,
-  getCareerInterviewReport,
-  type CareerInterviewReport,
-} from "@/services/careerService";
 import type {
   QaReview,
   RadarPoint,
   ReviewFeedback,
 } from "@/components/interview/report/types";
+import {
+  generateCareerInterviewReport,
+  getCareerInterviewReport,
+  type CareerInterviewReport,
+} from "@/services/careerService";
 
 type UnknownRecord = Record<string, unknown>;
 

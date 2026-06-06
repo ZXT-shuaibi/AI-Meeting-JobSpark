@@ -29,7 +29,7 @@ export default function InterviewReportPage() {
 
   return (
     <div className="h-full overflow-y-auto bg-white">
-      <div className="max-w-7xl mx-auto px-6 py-10 space-y-8">
+      <div className="mx-auto max-w-7xl space-y-8 px-6 py-10">
         <motion.div
           initial={{ opacity: 0, y: 16, filter: "blur(6px)" }}
           animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
@@ -39,7 +39,7 @@ export default function InterviewReportPage() {
         </motion.div>
 
         {!reportSessionId && (
-          <Card className="p-4 border-amber-100 bg-amber-50 text-amber-700 text-sm">
+          <Card className="border-amber-100 bg-amber-50 p-4 text-sm text-amber-700">
             未获取到会话 ID，当前显示为空报告。请从面试流程结束后进入本页。
           </Card>
         )}

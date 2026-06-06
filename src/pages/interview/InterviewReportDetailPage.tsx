@@ -3,12 +3,12 @@ import { ArrowLeft, FileSearch } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import InterviewQaReplayCard from "@/components/interview/report/InterviewQaReplayCard";
+import { useInterviewReportData } from "@/hooks/interview/report/useInterviewReportData";
 import { ROUTES } from "@/lib/constants";
 import {
   buildReportSearch,
   getReportSessionIdFromLocation,
 } from "@/lib/interviewReportRoute";
-import { useInterviewReportData } from "@/hooks/interview/report/useInterviewReportData";
 
 const scoreText = (value: number | null) =>
   typeof value === "number" && Number.isFinite(value) ? `${value}` : "--";
