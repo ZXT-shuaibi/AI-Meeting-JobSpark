@@ -1,4 +1,9 @@
 import { AppError, ErrorCode } from "@/lib/errors";
+import type { ChatMessageTts } from "@/lib/chat";
+import {
+  planCareerInterviewTextToSpeech,
+  type CareerInterviewTtsPlan,
+} from "@/services/careerService";
 import { xunfeiTtsService } from "@/services/xunfeiTtsService";
 
 export const INTERVIEW_QUESTION_TTS_REQUEST = Object.freeze({
@@ -29,6 +34,48 @@ export const normalizeBase64Audio = (value: string) =>
     .replace(/-/g, "+")
     .replace(/_/g, "/");
 
-export type SynthesizedTtsTask = Awaited<
-  ReturnType<typeof xunfeiTtsService.synthesize>
->;
+export type SynthesizedTtsTask =
+  | Awaited<ReturnType<typeof xunfeiTtsService.synthesize>>
+  | CareerInterviewTtsPlan;
+
+export const synthesizeChatMessageTts = async (
+  tts: ChatMessageTts | undefined,
+  signal: AbortSignal,
+): Promise<SynthesizedTtsTask> => {
+  const text = tts?.text?.trim();
+  if (!text) {
+    throw new Error("TTS text is required");
+  }
+
+  const sessionId = tts?.sessionId?.trim();
+
+  if (tts?.provider === "career-interview" && sessionId) {
+    const plan = await planCareerInterviewTextToSpeech(sessionId, {
+      turnId: tts.turnId?.trim() || undefined,
+      text,
+    });
+
+    if (
+      plan.enabled &&
+      plan.completed &&
+      plan.success &&
+      (plan.audioBase64 || plan.audioUrl)
+    ) {
+      return plan;
+    }
+
+    throw new Error(
+      plan.degradeReason ||
+        plan.fallbackText ||
+        "Career interview TTS is unavailable",
+    );
+  }
+
+  return xunfeiTtsService.synthesize(
+    {
+      ...INTERVIEW_QUESTION_TTS_REQUEST,
+      text,
+    },
+    { signal },
+  );
+};

@@ -1,7 +1,17 @@
 import { render, screen } from "@testing-library/react";
 import { Outlet, RouterProvider, createMemoryRouter } from "react-router-dom";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import { appRoutes } from "@/app/router";
+import { ROUTES } from "@/lib/constants";
+
+const useAppSelectorMock = vi.fn();
+
+vi.mock("@/store/hooks", () => ({
+  useAppSelector: (
+    selector: (state: { user: { isAuthenticated: boolean } }) => unknown,
+  ) => useAppSelectorMock(selector),
+}));
 
 vi.mock("@/layouts/AppLayout", () => ({
   default: function MockAppLayout() {
@@ -79,10 +89,22 @@ vi.mock("@/pages/interview/InterviewReportPage", () => ({
   },
 }));
 
+vi.mock("@/pages/interview/InterviewReportDetailPage", () => ({
+  default: function MockInterviewReportDetailPage() {
+    return <div>interview-report-detail-page</div>;
+  },
+}));
+
 describe("appRoutes", () => {
-  it("loads the marketing home route lazily", async () => {
+  beforeEach(() => {
+    useAppSelectorMock.mockImplementation((selector) =>
+      selector({ user: { isAuthenticated: false } }),
+    );
+  });
+
+  it("keeps / on the marketing home when the user is not authenticated", async () => {
     const router = createMemoryRouter(appRoutes, {
-      initialEntries: ["/"],
+      initialEntries: [ROUTES.home],
     });
 
     render(<RouterProvider router={router} />);
@@ -91,9 +113,24 @@ describe("appRoutes", () => {
     expect(screen.getByTestId("app-layout")).toBeDefined();
   });
 
+  it("redirects authenticated users from / to /career", async () => {
+    useAppSelectorMock.mockImplementation((selector) =>
+      selector({ user: { isAuthenticated: true } }),
+    );
+
+    const router = createMemoryRouter(appRoutes, {
+      initialEntries: [ROUTES.home],
+    });
+
+    render(<RouterProvider router={router} />);
+
+    expect(await screen.findByText("resume-list-page")).toBeDefined();
+    expect(router.state.location.pathname).toBe(ROUTES.career);
+  });
+
   it("loads the auth route lazily", async () => {
     const router = createMemoryRouter(appRoutes, {
-      initialEntries: ["/auth"],
+      initialEntries: [ROUTES.auth],
     });
 
     render(<RouterProvider router={router} />);
@@ -103,6 +140,10 @@ describe("appRoutes", () => {
   });
 
   it("loads authenticated chat routes lazily", async () => {
+    useAppSelectorMock.mockImplementation((selector) =>
+      selector({ user: { isAuthenticated: true } }),
+    );
+
     const router = createMemoryRouter(appRoutes, {
       initialEntries: ["/chat/session-1"],
     });
@@ -112,9 +153,73 @@ describe("appRoutes", () => {
     expect(await screen.findByText("chat-page")).toBeDefined();
   });
 
+  it("matches the new /career/interviews/:sessionId route", async () => {
+    useAppSelectorMock.mockImplementation((selector) =>
+      selector({ user: { isAuthenticated: true } }),
+    );
+
+    const router = createMemoryRouter(appRoutes, {
+      initialEntries: ["/career/interviews/session-1"],
+    });
+
+    render(<RouterProvider router={router} />);
+
+    expect(await screen.findByText("interview-page")).toBeDefined();
+    expect(router.state.location.pathname).toBe("/career/interviews/session-1");
+  });
+
+  it("redirects /career/interviews/room back to /career for the aligned interview start flow", async () => {
+    useAppSelectorMock.mockImplementation((selector) =>
+      selector({ user: { isAuthenticated: true } }),
+    );
+
+    const router = createMemoryRouter(appRoutes, {
+      initialEntries: [ROUTES.interviewRoomEntry],
+    });
+
+    render(<RouterProvider router={router} />);
+
+    expect(await screen.findByText("resume-list-page")).toBeDefined();
+    expect(router.state.location.pathname).toBe(ROUTES.career);
+  });
+
+  it("matches the new /career/interview-reports/:sessionId route", async () => {
+    useAppSelectorMock.mockImplementation((selector) =>
+      selector({ user: { isAuthenticated: true } }),
+    );
+
+    const router = createMemoryRouter(appRoutes, {
+      initialEntries: ["/career/interview-reports/session-1"],
+    });
+
+    render(<RouterProvider router={router} />);
+
+    expect(
+      await screen.findByText("interview-report-detail-page"),
+    ).toBeDefined();
+    expect(router.state.location.pathname).toBe(
+      "/career/interview-reports/session-1",
+    );
+  });
+
+  it("matches the new /career/resumes/:resumeVersionId route", async () => {
+    useAppSelectorMock.mockImplementation((selector) =>
+      selector({ user: { isAuthenticated: true } }),
+    );
+
+    const router = createMemoryRouter(appRoutes, {
+      initialEntries: ["/career/resumes/resume-1"],
+    });
+
+    render(<RouterProvider router={router} />);
+
+    expect(await screen.findByText("resume-detail-page")).toBeDefined();
+    expect(router.state.location.pathname).toBe("/career/resumes/resume-1");
+  });
+
   it("loads public preview resume routes without authentication", async () => {
     const router = createMemoryRouter(appRoutes, {
-      initialEntries: ["/preview/resume/list"],
+      initialEntries: [ROUTES.previewResumeList],
     });
 
     render(<RouterProvider router={router} />);

@@ -3,6 +3,7 @@ import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import MarketingHomePage from "@/pages/marketing/MarketingHomePage";
 import { ROUTES } from "@/lib/constants";
 import chatReducer from "@/store/slices/chatSlice";
@@ -68,15 +69,15 @@ describe("MarketingHomePage", () => {
     vi.clearAllMocks();
   });
 
-  it("navigates to interview intro for authenticated users", () => {
+  it("navigates to /career for authenticated users", () => {
     renderPage(true);
 
     fireEvent.click(screen.getAllByRole("button", { name: "立即体验" })[0]);
 
-    expect(navigateMock).toHaveBeenCalledWith(ROUTES.interviewIntro);
+    expect(navigateMock).toHaveBeenCalledWith(ROUTES.career);
   });
 
-  it("redirects unauthenticated users to auth with interview intro fallback", () => {
+  it("redirects unauthenticated users to auth with /career fallback", () => {
     renderPage(false);
 
     fireEvent.click(screen.getAllByRole("button", { name: "立即体验" })[0]);
@@ -84,7 +85,7 @@ describe("MarketingHomePage", () => {
     expect(navigateMock).toHaveBeenCalledWith(ROUTES.auth, {
       state: {
         from: {
-          pathname: ROUTES.interviewIntro,
+          pathname: ROUTES.career,
         },
       },
     });

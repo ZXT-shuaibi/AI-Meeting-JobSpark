@@ -3,6 +3,7 @@ import { AudioToTextWebSocket } from "@/services/audioToTextWs";
 
 type UseAudioTranscriptionTransportParams = {
   userId: string | null;
+  interviewSessionId?: string | null;
   onReplace: (text: string) => void;
   onArchive: (text: string) => void;
   onError: (message: string) => void;
@@ -10,6 +11,7 @@ type UseAudioTranscriptionTransportParams = {
 
 export function useAudioTranscriptionTransport({
   userId,
+  interviewSessionId,
   onReplace,
   onArchive,
   onError,
@@ -49,13 +51,21 @@ export function useAudioTranscriptionTransport({
   }, []);
 
   const connect = useCallback(() => {
-    if (!userId) {
-      throw new Error("Audio transcription requires a valid user id");
+    const normalizedInterviewSessionId = interviewSessionId?.trim() || null;
+    if (!normalizedInterviewSessionId && !userId) {
+      throw new Error(
+        "Audio transcription requires a valid session or user id",
+      );
     }
 
     disconnect();
 
-    const transport = new AudioToTextWebSocket(userId);
+    const transport = normalizedInterviewSessionId
+      ? new AudioToTextWebSocket({
+          mode: "career-interview",
+          interviewSessionId: normalizedInterviewSessionId,
+        })
+      : new AudioToTextWebSocket(userId as string);
     transport.onConnected = () => {
       transport.sendCommand("start_transcription");
     };
@@ -71,7 +81,7 @@ export function useAudioTranscriptionTransport({
 
     transportRef.current = transport;
     transport.connect();
-  }, [disconnect, userId]);
+  }, [disconnect, interviewSessionId, userId]);
 
   const sendAudioChunk = useCallback((data: ArrayBuffer) => {
     transportRef.current?.sendAudio(data);

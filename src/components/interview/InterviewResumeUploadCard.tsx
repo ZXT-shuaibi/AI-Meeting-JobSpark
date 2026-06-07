@@ -1,10 +1,12 @@
 import { motion } from "framer-motion";
-import { Check, Loader2 } from "lucide-react";
+import { ArrowRight, Check, Loader2 } from "lucide-react";
 import type { ChangeEvent, RefObject } from "react";
+import { Link } from "react-router-dom";
+
 import ErrorNotice from "@/components/feedback/ErrorNotice";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { INTERVIEW_DEFAULTS } from "@/lib/constants";
+import { INTERVIEW_DEFAULTS, ROUTES } from "@/lib/constants";
 
 const RESUME_UPLOAD_STAGES = [
   "正在上传简历",
@@ -16,6 +18,7 @@ type InterviewResumeUploadCardProps = {
   fileInputRef: RefObject<HTMLInputElement | null>;
   isResumeUploading: boolean;
   showUploadButton: boolean;
+  showWorkspaceGuide?: boolean;
   resumeUploadStage: number;
   resumeLocalFile: File | null;
   resumeFileUrl: string | null;
@@ -31,6 +34,7 @@ export default function InterviewResumeUploadCard({
   fileInputRef,
   isResumeUploading,
   showUploadButton,
+  showWorkspaceGuide = false,
   resumeUploadStage,
   resumeLocalFile,
   resumeFileUrl,
@@ -51,17 +55,23 @@ export default function InterviewResumeUploadCard({
   const hasResumeEntry = Boolean(
     resumeLocalFile || resumeFileUrl || resumeName || resumePreviewError,
   );
+  const title = showWorkspaceGuide
+    ? "请先从简历工作台开始"
+    : hasResumeEntry && !showUploadButton
+      ? "当前面试已绑定简历版本"
+      : "上传简历后开始面试";
+  const description = showWorkspaceGuide
+    ? "HireSpark 主链路会先在简历工作台里绑定简历版本和目标 JD，再创建真实面试会话。"
+    : hasResumeEntry && !showUploadButton
+      ? "这场面试会话沿用了 HireSpark 工作台中的真实简历版本，你可以随时查看绑定状态。"
+      : "当前支持 PDF，系统会基于简历内容生成面试题。";
 
   return (
     <Card className="border-dashed border-slate-200 p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm font-medium text-slate-900">
-            上传简历后开始面试
-          </p>
-          <p className="mt-1 text-xs text-slate-500">
-            当前支持 PDF，系统会基于简历内容生成面试题。
-          </p>
+          <p className="text-sm font-medium text-slate-900">{title}</p>
+          <p className="mt-1 text-xs text-slate-500">{description}</p>
         </div>
         <div className="flex items-center gap-2">
           <input
@@ -71,7 +81,15 @@ export default function InterviewResumeUploadCard({
             className="hidden"
             onChange={onResumeFileSelect}
           />
-          {showUploadButton ? (
+          {showWorkspaceGuide ? (
+            <Button asChild className="rounded-full">
+              <Link to={ROUTES.career}>
+                前往简历工作台
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          ) : null}
+          {showUploadButton && !showWorkspaceGuide ? (
             <Button
               variant="outline"
               className="rounded-full"
@@ -98,9 +116,24 @@ export default function InterviewResumeUploadCard({
         </div>
       </div>
 
+      {showWorkspaceGuide ? (
+        <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+          <p className="font-medium text-slate-900">推荐路径</p>
+          <p className="mt-2">1. 在简历工作台选择一份简历版本。</p>
+          <p>2. 在优化页补充目标 JD。</p>
+          <p>
+            3. 点击“开始模拟面试”，系统会进入
+            <code className="mx-1 rounded bg-white px-1.5 py-0.5 text-xs">
+              /career/interviews/:sessionId
+            </code>
+            主链路。
+          </p>
+        </div>
+      ) : null}
+
       {resumeUploadError ? (
         <div className="mt-3">
-          <ErrorNotice title="简历上传失败" description={resumeUploadError} />
+          <ErrorNotice title="简历处理异常" description={resumeUploadError} />
         </div>
       ) : null}
 

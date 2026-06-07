@@ -140,6 +140,11 @@ export const userSlice = createSlice({
       .addCase(logoutUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload ?? "Logout failed";
+        if (state.isAuthenticated || state.currentUser) {
+          state.authEpoch += 1;
+        }
+        state.isAuthenticated = false;
+        state.currentUser = null;
       });
   },
 });

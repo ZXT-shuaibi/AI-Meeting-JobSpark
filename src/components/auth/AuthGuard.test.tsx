@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import AuthGuard from "@/components/auth/AuthGuard";
 
@@ -22,36 +22,60 @@ describe("AuthGuard", () => {
   });
 
   it("redirects unauthenticated users to auth when preview mode is off", async () => {
-    useAppSelectorMock.mockImplementation((selector: (state: unknown) => unknown) =>
-      selector({ user: { isAuthenticated: false } }),
+    useAppSelectorMock.mockImplementation(
+      (selector: (state: unknown) => unknown) =>
+        selector({ user: { isAuthenticated: false } }),
     );
     isStaticPreviewEnabledMock.mockReturnValue(false);
 
     render(
-      <MemoryRouter initialEntries={["/resume/list"]}>
+      <MemoryRouter initialEntries={["/career"]}>
         <Routes>
           <Route element={<AuthGuard />}>
-            <Route path="/resume/list" element={<div>protected-page</div>} />
+            <Route path="/career" element={<div>protected-page</div>} />
+          </Route>
+          <Route path="/auth" element={<AuthStateProbe />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText("auth-page")).toBeDefined();
+    expect(screen.getByText("/career")).toBeDefined();
+  });
+
+  it("allows access in static preview mode without authentication", async () => {
+    useAppSelectorMock.mockImplementation(
+      (selector: (state: unknown) => unknown) =>
+        selector({ user: { isAuthenticated: false } }),
+    );
+    isStaticPreviewEnabledMock.mockReturnValue(true);
+
+    render(
+      <MemoryRouter initialEntries={["/career"]}>
+        <Routes>
+          <Route element={<AuthGuard />}>
+            <Route path="/career" element={<div>protected-page</div>} />
           </Route>
           <Route path="/auth" element={<div>auth-page</div>} />
         </Routes>
       </MemoryRouter>,
     );
 
-    expect(await screen.findByText("auth-page")).toBeDefined();
+    expect(await screen.findByText("protected-page")).toBeDefined();
   });
 
-  it("allows access in static preview mode without authentication", async () => {
-    useAppSelectorMock.mockImplementation((selector: (state: unknown) => unknown) =>
-      selector({ user: { isAuthenticated: false } }),
+  it("renders the protected route when the user is authenticated", async () => {
+    useAppSelectorMock.mockImplementation(
+      (selector: (state: unknown) => unknown) =>
+        selector({ user: { isAuthenticated: true } }),
     );
-    isStaticPreviewEnabledMock.mockReturnValue(true);
+    isStaticPreviewEnabledMock.mockReturnValue(false);
 
     render(
-      <MemoryRouter initialEntries={["/resume/list"]}>
+      <MemoryRouter initialEntries={["/career"]}>
         <Routes>
           <Route element={<AuthGuard />}>
-            <Route path="/resume/list" element={<div>protected-page</div>} />
+            <Route path="/career" element={<div>protected-page</div>} />
           </Route>
           <Route path="/auth" element={<div>auth-page</div>} />
         </Routes>
@@ -61,3 +85,17 @@ describe("AuthGuard", () => {
     expect(await screen.findByText("protected-page")).toBeDefined();
   });
 });
+
+function AuthStateProbe() {
+  const location = useLocation();
+  const fromPathname =
+    (location.state as { from?: { pathname?: string } } | null)?.from
+      ?.pathname ?? "missing";
+
+  return (
+    <div>
+      <div>auth-page</div>
+      <div>{fromPathname}</div>
+    </div>
+  );
+}

@@ -1,8 +1,10 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ROUTES } from "@/lib/constants";
+
 import { AUTO_SAVE_SUCCESS_TEXT } from "@/hooks/interview/session/interviewSessionFlow.shared";
 import { useInterviewSessionFlow } from "@/hooks/interview/session/useInterviewSessionFlow";
+import { ROUTES } from "@/lib/constants";
+import { buildInterviewReportDetailPath } from "@/lib/interviewReportRoute";
 
 const navigateMock = vi.fn();
 const useParamsMock = vi.fn();
@@ -346,7 +348,7 @@ describe("useInterviewSessionFlow", () => {
     expect(invalidateQueriesMock).toHaveBeenCalled();
   });
 
-  it("clears the stored session and navigates to the report page with sessionId on end", async () => {
+  it("clears the stored session and navigates to the report detail page on end", async () => {
     useParamsMock.mockReturnValue({
       sessionId: "session-1",
     });
@@ -369,12 +371,40 @@ describe("useInterviewSessionFlow", () => {
     expect(storageState.setInterviewerSessionId).toHaveBeenCalledWith(null);
     expect(storageState.clearStoredSession).toHaveBeenCalledTimes(1);
     expect(navigateMock).toHaveBeenCalledWith(
-      `${ROUTES.interviewReport}?sessionId=session-1`,
+      buildInterviewReportDetailPath("session-1"),
       {
         state: {
           sessionId: "session-1",
         },
       },
     );
+  });
+
+  it("navigates to /career/interviews/:sessionId when a session becomes active", async () => {
+    const { result } = renderSessionFlow();
+
+    await act(async () => {
+      result.current.setInterviewerSessionId("session-77");
+    });
+
+    expect(navigateMock).toHaveBeenCalledWith("/career/interviews/session-77", {
+      replace: true,
+    });
+    expect(navigateMock).not.toHaveBeenCalledWith(
+      expect.stringContaining(":sessionId"),
+      expect.anything(),
+    );
+  });
+
+  it("navigates back to /career when the session is cleared", async () => {
+    const { result } = renderSessionFlow();
+
+    await act(async () => {
+      result.current.setInterviewerSessionId(null);
+    });
+
+    expect(navigateMock).toHaveBeenCalledWith(ROUTES.career, {
+      replace: true,
+    });
   });
 });

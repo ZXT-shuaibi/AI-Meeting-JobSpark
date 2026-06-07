@@ -31,12 +31,11 @@ const INTRO_COPY_BY_LOCALE: Record<InterviewIntroLocale, InterviewIntroCopy> = {
     description:
       "从简历分析开始，进入逐题实战练习，最后生成可追溯、可恢复的面试报告。",
     continueButton: "继续上次面试",
-    startButton: "进入面试室",
+    startButton: "进入面试工作台",
     reportButton: "查看示例报告",
     processTitle: "面试流程",
     processUpdateTitle: "题库每日动态更新",
-    processUpdateDescription:
-      "覆盖新技术栈与真实面试场景，持续保持命中率。",
+    processUpdateDescription: "覆盖新技术栈与真实面试场景，持续保持命中率。",
     sampleRadarTitle: "示例雷达图",
     highlights: [
       {
@@ -45,7 +44,7 @@ const INTRO_COPY_BY_LOCALE: Record<InterviewIntroLocale, InterviewIntroCopy> = {
       },
       {
         title: "回答得分",
-        description: "逻辑、结构、深度与表达一致评估",
+        description: "逻辑、结构、深度与表达一起评估",
       },
       {
         title: "能力雷达",
@@ -58,7 +57,7 @@ const INTRO_COPY_BY_LOCALE: Record<InterviewIntroLocale, InterviewIntroCopy> = {
     ],
     steps: [
       "上传简历与岗位方向",
-      "进入面试室，AI 逐题追问",
+      "进入面试房间，AI 逐题追问",
       "生成表现报告与提升建议",
     ],
     mockRadarPoints: [
@@ -66,7 +65,7 @@ const INTRO_COPY_BY_LOCALE: Record<InterviewIntroLocale, InterviewIntroCopy> = {
       { label: "项目表达", value: 76 },
       { label: "沟通协作", value: 81 },
       { label: "临场反应", value: 72 },
-      { label: "题目分析", value: 88 },
+      { label: "问题分析", value: 88 },
     ],
   },
   "en-US": {
@@ -85,15 +84,18 @@ const INTRO_COPY_BY_LOCALE: Record<InterviewIntroLocale, InterviewIntroCopy> = {
     highlights: [
       {
         title: "Resume score",
-        description: "Multi-dimensional scoring based on role and capability models",
+        description:
+          "Multi-dimensional scoring based on role and capability models",
       },
       {
         title: "Answer score",
-        description: "Evaluate logic, structure, depth, and expression together",
+        description:
+          "Evaluate logic, structure, depth, and expression together",
       },
       {
         title: "Capability radar",
-        description: "Technical depth, communication, projects, and live response",
+        description:
+          "Technical depth, communication, projects, and live response",
       },
       {
         title: "Fresh question bank",

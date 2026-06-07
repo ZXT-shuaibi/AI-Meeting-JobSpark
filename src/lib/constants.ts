@@ -1,14 +1,16 @@
 export const ROUTES = {
   home: "/",
-  interviewIntro: "/interview",
-  interviewRoom: "/interview/room",
-  interviewReport: "/interview/report",
-  interviewReportDetail: "/interview/report/detail",
+  career: "/career",
+  interviewIntro: "/career/interviews",
+  interviewRoomEntry: "/career/interviews/room",
+  interviewRoom: "/career/interviews/:sessionId",
+  interviewReport: "/career/interview-reports",
+  interviewReportDetail: "/career/interview-reports/:sessionId",
   chat: "/chat",
-  resumeList: "/resume/list",
-  resumeUpload: "/resume/upload",
-  resumeOptimize: "/resume/optimize",
-  resumeDetail: "/resume/detail",
+  resumeList: "/career",
+  resumeUpload: "/career/resumes/upload",
+  resumeOptimize: "/career/optimizations",
+  resumeDetail: "/career/resumes/:resumeVersionId",
   questionBank: "/question-bank",
   questionBankManage: "/question-bank/manage",
   auth: "/auth",
@@ -17,6 +19,9 @@ export const ROUTES = {
   previewResumeOptimize: "/preview/resume/optimize",
   previewResumeDetail: "/preview/resume/detail",
 } as const;
+
+export const buildInterviewRoomPath = (sessionId: string) =>
+  ROUTES.interviewRoom.replace(":sessionId", encodeURIComponent(sessionId));
 
 export const CHAT_ROLES = {
   user: "user",

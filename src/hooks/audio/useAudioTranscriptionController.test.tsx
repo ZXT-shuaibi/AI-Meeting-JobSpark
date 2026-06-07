@@ -8,6 +8,7 @@ const transportState = {
   sendAudioChunk: vi.fn(),
   params: null as null | {
     userId: string | null;
+    interviewSessionId?: string | null;
     onReplace: (text: string) => void;
     onArchive: (text: string) => void;
     onError: (message: string) => void;
@@ -57,6 +58,15 @@ describe("useAudioTranscriptionController", () => {
     streamState.params = null;
     streamState.start.mockResolvedValue(undefined);
     streamState.stop.mockResolvedValue(undefined);
+  });
+
+  it("passes the interview session id to the transport on the main interview chain", () => {
+    renderHook(() =>
+      useAudioTranscriptionController(currentUser, "session-career-1"),
+    );
+
+    expect(transportState.params?.userId).toBe("tester");
+    expect(transportState.params?.interviewSessionId).toBe("session-career-1");
   });
 
   it("cleans up transport and microphone when startRecording fails", async () => {

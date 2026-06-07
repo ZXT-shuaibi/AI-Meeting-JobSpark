@@ -5,30 +5,29 @@ import {
   useState,
   type ChangeEvent,
 } from "react";
-import { interviewService } from "@/services/interviewService";
-import {
-  buildResumeMetadata,
-  deriveResumeName,
-  isPdfResumeFile,
-} from "@/hooks/interview/resume/interviewResumeAnalysis.shared";
 import { resolveInterviewTypeLabel } from "@/hooks/interview/shared/interviewUtils";
 import { useInterviewResumePreviewState } from "@/hooks/interview/resume/useInterviewResumePreviewState";
 import { useInterviewUploadStage } from "@/hooks/interview/resume/useInterviewUploadStage";
+import {
+  readCareerInterviewSessionBinding,
+  readCareerWorkspaceSnapshot,
+  writeCareerInterviewSessionBinding,
+} from "@/lib/careerWorkspaceStorage";
+import { getCareerResumeVersion } from "@/services/careerService";
 
 type UseInterviewResumeAnalysisOptions = {
   interviewerSessionId: string | null;
-  setInterviewerSessionId: (sessionId: string | null) => void;
-  syncNextQuestion: (sessionId: string) => Promise<void>;
-  resetInterviewFlow: () => void;
-  clearInterviewError: () => void;
 };
+
+const HIRESPARK_PREVIEW_UNAVAILABLE_MESSAGE =
+  "当前面试已绑定 HireSpark 简历版本，暂不提供原始 PDF 预览，请返回简历工作台查看正文。";
+const MISSING_WORKSPACE_RESUME_MESSAGE =
+  "未找到与当前面试绑定的简历版本，请返回简历工作台重新发起面试。";
+const INTERVIEW_UPLOAD_DISABLED_MESSAGE =
+  "请先从简历工作台选择简历并创建面试会话。";
 
 export function useInterviewResumeAnalysis({
   interviewerSessionId,
-  setInterviewerSessionId,
-  syncNextQuestion,
-  resetInterviewFlow,
-  clearInterviewError,
 }: UseInterviewResumeAnalysisOptions) {
   const [resumeScore, setResumeScore] = useState<number | null>(null);
   const [resumeInterviewType, setResumeInterviewType] = useState<string | null>(
@@ -46,25 +45,16 @@ export function useInterviewResumeAnalysis({
     resumeFileUrl,
     resumeRemoteFile,
     resumeLocalFile,
-    setResumeLocalFile,
     resumePreviewError,
     setResumePreviewError,
     numPages,
-    setNumPages,
     resumePreviewSource,
     resumeOpenPreviewUrl,
-    replaceRemoteResumePreview,
     clearRemoteResumePreview,
-    clearPreviewState,
     handleResumePreviewLoadSuccess,
     handleResumePreviewLoadError,
   } = useInterviewResumePreviewState();
-  const {
-    isResumeUploading,
-    resumeUploadStage,
-    startUploadStage,
-    finishUploadStage,
-  } = useInterviewUploadStage();
+  const { isResumeUploading, resumeUploadStage } = useInterviewUploadStage();
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const hydratedSessionIdRef = useRef<string | null>(null);
@@ -97,16 +87,8 @@ export function useInterviewResumeAnalysis({
   useEffect(() => {
     if (!interviewerSessionId) {
       hydratedSessionIdRef.current = null;
-      return;
     }
-
-    if (hydratedSessionIdRef.current === interviewerSessionId) {
-      return;
-    }
-
-    clearPreviewState();
-    resetResumeMetadata();
-  }, [clearPreviewState, interviewerSessionId, resetResumeMetadata]);
+  }, [interviewerSessionId]);
 
   useEffect(() => {
     if (!interviewerSessionId || isResumeUploading) {
@@ -120,55 +102,58 @@ export function useInterviewResumeAnalysis({
 
     const hydrateResumeState = async () => {
       try {
-        const restored =
-          await interviewService.restoreInterviewSession(interviewerSessionId);
-        if (cancelled) {
-          return;
-        }
+        const sessionBinding =
+          readCareerInterviewSessionBinding(interviewerSessionId);
+        const workspace = readCareerWorkspaceSnapshot();
+        const resumeVersionId =
+          sessionBinding?.resumeVersionId?.trim() ||
+          workspace.resumeVersionId?.trim() ||
+          null;
 
-        applyResumeMetadata(
-          buildResumeMetadata({
-            resumeScore: restored.resumeScore,
-            interviewType: restored.interviewType,
-            suggestions: restored.suggestions,
-            resumeFileUrl: restored.resumeFileUrl,
-          }),
-        );
-        setResumePreviewError(null);
-
-        try {
-          const previewBlob =
-            await interviewService.fetchInterviewResumePreviewBlob(
-              interviewerSessionId,
-            );
-          if (cancelled) {
-            return;
-          }
-
-          replaceRemoteResumePreview(
-            previewBlob,
-            URL.createObjectURL(previewBlob),
-            deriveResumeName(restored.resumeFileUrl) || "resume.pdf",
-          );
-        } catch (error) {
+        if (!resumeVersionId) {
           if (cancelled) {
             return;
           }
           clearRemoteResumePreview();
-          const message =
-            error instanceof Error
-              ? error.message
-              : "Failed to load resume preview";
-          setResumePreviewError(message);
-          console.error("Failed to load interview resume preview:", error);
+          resetResumeMetadata();
+          setResumeUploadError(MISSING_WORKSPACE_RESUME_MESSAGE);
+          setResumePreviewError(MISSING_WORKSPACE_RESUME_MESSAGE);
+          hydratedSessionIdRef.current = interviewerSessionId;
+          return;
         }
 
+        const resumeVersion = await getCareerResumeVersion(resumeVersionId);
+        if (cancelled) {
+          return;
+        }
+
+        writeCareerInterviewSessionBinding(interviewerSessionId, {
+          profileId: resumeVersion.profileId,
+          resumeVersionId: resumeVersion.id,
+          jdId: sessionBinding?.jdId ?? null,
+        });
+        clearRemoteResumePreview();
+        applyResumeMetadata({
+          resumeName:
+            resumeVersion.title?.trim() || `简历版本 ${resumeVersion.id}`,
+          resumeScore: null,
+          resumeInterviewType: null,
+          resumeSuggestions: [],
+        });
+        setResumeUploadError(null);
+        setResumePreviewError(HIRESPARK_PREVIEW_UNAVAILABLE_MESSAGE);
         hydratedSessionIdRef.current = interviewerSessionId;
       } catch (error) {
         if (cancelled) {
           return;
         }
-        console.error("Failed to restore interview session metadata:", error);
+        clearRemoteResumePreview();
+        resetResumeMetadata();
+        setResumeUploadError(
+          error instanceof Error
+            ? error.message
+            : "Failed to load bound resume version",
+        );
       }
     };
 
@@ -178,94 +163,20 @@ export function useInterviewResumeAnalysis({
       cancelled = true;
     };
   }, [
+    applyResumeMetadata,
     clearRemoteResumePreview,
     interviewerSessionId,
     isResumeUploading,
-    replaceRemoteResumePreview,
-    applyResumeMetadata,
+    resetResumeMetadata,
     setResumePreviewError,
   ]);
 
   const handleResumeFileSelect = async (
     event: ChangeEvent<HTMLInputElement>,
   ) => {
-    const file = event.target.files?.[0];
     event.target.value = "";
-    if (!file) return;
-
-    if (!isPdfResumeFile(file)) {
-      setResumeUploadError("Only PDF files are supported");
-      return;
-    }
-
-    setResumeUploadError(null);
-    setResumePreviewError(null);
-    clearInterviewError();
-    resetInterviewFlow();
-
-    resetResumeMetadata();
-    setResumeName(file.name);
-    setResumeLocalFile(file);
-    clearRemoteResumePreview();
-    setNumPages(1);
-    setIsResumeOpen(false);
-    hydratedSessionIdRef.current = null;
-    startUploadStage();
-
-    try {
-      const createdSession = await interviewService.createInterviewSession();
-      const sessionId = createdSession.sessionId;
-
-      const analyzed = await interviewService.extractInterviewQuestions({
-        sessionId,
-        resumePdf: file,
-      });
-
-      if (analyzed.isSuccess === 0) {
-        throw new Error(
-          analyzed.errorMessage || "Failed to analyze resume, please retry",
-        );
-      }
-
-      applyResumeMetadata(
-        buildResumeMetadata({
-          resumeScore: analyzed.resumeScore,
-          interviewType: analyzed.interviewType,
-          suggestions: analyzed.suggestions ?? null,
-          resumeFileUrl: file.name,
-        }),
-      );
-      setInterviewerSessionId(sessionId);
-      hydratedSessionIdRef.current = sessionId;
-      setResumePreviewError(null);
-
-      try {
-        const previewBlob =
-          await interviewService.fetchInterviewResumePreviewBlob(sessionId);
-        replaceRemoteResumePreview(
-          previewBlob,
-          URL.createObjectURL(previewBlob),
-          file.name,
-        );
-      } catch (error) {
-        console.error(
-          "Failed to fetch proxied resume preview after upload:",
-          error,
-        );
-      }
-
-      await syncNextQuestion(sessionId);
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Failed to upload resume, please retry";
-      setResumeUploadError(message);
-      clearRemoteResumePreview();
-      setInterviewerSessionId(null);
-    } finally {
-      finishUploadStage();
-    }
+    setResumeUploadError(INTERVIEW_UPLOAD_DISABLED_MESSAGE);
+    setResumePreviewError(INTERVIEW_UPLOAD_DISABLED_MESSAGE);
   };
 
   return {

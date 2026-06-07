@@ -3,6 +3,7 @@ import { useAudioToText } from "@/hooks/useAudioToText";
 import { mergeTranscriptionBuffers } from "@/components/interview/sketchpad/sketchpadTypes";
 
 type UseInterviewSketchpadTranscriptionParams = {
+  interviewSessionId: string | null;
   notes: string;
   transcriptionBuffer: string;
   setNotes: (value: string) => void;
@@ -12,6 +13,7 @@ type UseInterviewSketchpadTranscriptionParams = {
 };
 
 export function useInterviewSketchpadTranscription({
+  interviewSessionId,
   notes,
   transcriptionBuffer,
   setNotes,
@@ -19,16 +21,17 @@ export function useInterviewSketchpadTranscription({
   onInsertNotes,
   onOpenChange,
 }: UseInterviewSketchpadTranscriptionParams) {
-  const [recordingBaseBuffer, setRecordingBaseBuffer] = useState(
-    transcriptionBuffer,
-  );
+  const [recordingBaseBuffer, setRecordingBaseBuffer] =
+    useState(transcriptionBuffer);
   const {
     isRecording,
     transcription,
     error: transcriptionError,
     startRecording,
     stopRecording,
-  } = useAudioToText();
+  } = useAudioToText({
+    interviewSessionId,
+  });
 
   const liveTranscriptionBuffer = useMemo(
     () =>

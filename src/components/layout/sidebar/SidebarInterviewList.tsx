@@ -34,12 +34,15 @@ export default function SidebarInterviewList({
   isFetchingNextPage,
   onOpenRecord,
 }: SidebarInterviewListProps) {
+  const isInterviewReportActive =
+    activePathname.startsWith(ROUTES.interviewReport) ||
+    activePathname.startsWith("/interview/report");
+
   return (
     <>
       {records.map((record) => {
         const isActive =
-          activePathname.startsWith(ROUTES.interviewReport) &&
-          activeSessionId === record.sessionId;
+          isInterviewReportActive && activeSessionId === record.sessionId;
 
         return (
           <Button
