@@ -31,6 +31,7 @@ const resolveAudioUserId = (currentUser: UserRespDTO | null) => {
 
 export function useAudioTranscriptionController(
   currentUser: UserRespDTO | null,
+  interviewSessionId?: string | null,
 ) {
   const [isRecording, setIsRecording] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,6 +50,7 @@ export function useAudioTranscriptionController(
     sendAudioChunk,
   } = useAudioTranscriptionTransport({
     userId: resolveAudioUserId(currentUser),
+    interviewSessionId,
     onReplace: useCallback((text: string) => {
       dispatchTranscription({
         kind: "replace",

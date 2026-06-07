@@ -1,9 +1,15 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ROUTES } from "@/lib/constants";
 import InterviewIntroPage from "@/pages/interview/InterviewIntroPage";
+
+const isStaticPreviewEnabledMock = vi.fn();
+
+vi.mock("@/config/env", () => ({
+  isStaticPreviewEnabled: () => isStaticPreviewEnabledMock(),
+}));
 
 vi.mock("@/components/interview/intro/InterviewIntroHighlights", () => ({
   default: function MockInterviewIntroHighlights() {
@@ -36,16 +42,13 @@ vi.mock("@/components/interview/intro/introCopy", () => ({
   }),
 }));
 
-vi.mock("@/services/interviewService", () => ({
-  interviewService: {
-    pageInterviewConversations: vi.fn().mockResolvedValue({
-      records: [],
-    }),
-  },
-}));
-
 describe("InterviewIntroPage", () => {
-  it("routes the start interview entry to the reachable no-session interview room", async () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    isStaticPreviewEnabledMock.mockReturnValue(false);
+  });
+
+  it("routes the start interview action back to the career workspace for real resume and jd binding", async () => {
     render(
       <MemoryRouter>
         <InterviewIntroPage />
@@ -56,7 +59,31 @@ describe("InterviewIntroPage", () => {
       name: /start-interview/i,
     });
 
-    expect(startLink.getAttribute("href")).toBe(ROUTES.interviewRoomEntry);
+    expect(startLink.getAttribute("href")).toBe(ROUTES.career);
     expect(startLink.getAttribute("href")).not.toBe(ROUTES.interviewIntro);
+  });
+
+  it("hides the sample report entry when static preview is disabled", () => {
+    render(
+      <MemoryRouter>
+        <InterviewIntroPage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByRole("link", { name: /report-button/i })).toBeNull();
+  });
+
+  it("shows the sample report entry when static preview is enabled", () => {
+    isStaticPreviewEnabledMock.mockReturnValue(true);
+
+    render(
+      <MemoryRouter>
+        <InterviewIntroPage />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByRole("link", { name: /report-button/i }).getAttribute("href"),
+    ).toBe(ROUTES.interviewReport);
   });
 });

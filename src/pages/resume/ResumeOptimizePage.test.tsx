@@ -14,6 +14,10 @@ import {
 } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import {
+  readCareerInterviewSessionBinding,
+  readCareerWorkspaceSnapshot,
+} from "@/lib/careerWorkspaceStorage";
 import { ROUTES } from "@/lib/constants";
 import ResumeOptimizePage from "./ResumeOptimizePage";
 
@@ -45,6 +49,7 @@ vi.mock("@/services/careerService", () => ({
 
 describe("ResumeOptimizePage", () => {
   beforeEach(() => {
+    window.localStorage.clear();
     mockCreateCareerInterview.mockReset();
     mockCreateCareerJob.mockReset();
     mockCreateCareerOptimization.mockReset();
@@ -60,6 +65,9 @@ describe("ResumeOptimizePage", () => {
       title: "resume title",
       content: "resume body",
       markdownContent: "resume body",
+    });
+    mockCreateCareerJob.mockResolvedValue({
+      id: "job-opt-001",
     });
     mockCreateCareerOptimization.mockResolvedValue({
       id: "task-123",
@@ -107,14 +115,30 @@ describe("ResumeOptimizePage", () => {
       </MemoryRouter>,
     );
 
+    expect(
+      await screen.findByRole("heading", { name: "简历定向优化" }),
+    ).toBeDefined();
     expect(await screen.findByDisplayValue("resume body")).toBeDefined();
+    fireEvent.change(screen.getByTestId("resume-optimize-jd-textarea"), {
+      target: {
+        value: "Need React, TypeScript, and measurable frontend impact.",
+      },
+    });
 
     fireEvent.click(screen.getByTestId("resume-optimize-start-optimization"));
 
     await waitFor(() => {
+      expect(mockCreateCareerJob).toHaveBeenCalledWith({
+        rawText: "Need React, TypeScript, and measurable frontend impact.",
+        sourceLocation: "",
+        sourceType: "MANUAL",
+      });
+    });
+
+    await waitFor(() => {
       expect(mockCreateCareerOptimization).toHaveBeenCalledWith({
         resumeVersionId: "resume-real-1",
-        jdId: undefined,
+        jdId: "job-opt-001",
         alignmentReportId: undefined,
       });
     });
@@ -136,6 +160,9 @@ describe("ResumeOptimizePage", () => {
       title: "resume title",
       content: "resume body",
       markdownContent: "resume body",
+    });
+    mockCreateCareerJob.mockResolvedValue({
+      id: "job-opt-001",
     });
     mockCreateCareerOptimization.mockResolvedValue({
       id: "task-123",
@@ -172,9 +199,49 @@ describe("ResumeOptimizePage", () => {
     );
 
     await screen.findByDisplayValue("resume body");
+    fireEvent.change(screen.getByTestId("resume-optimize-jd-textarea"), {
+      target: {
+        value: "Need React, TypeScript, and measurable frontend impact.",
+      },
+    });
     fireEvent.click(screen.getByTestId("resume-optimize-start-optimization"));
 
     expect(await screen.findByText("refresh failed")).toBeDefined();
+  });
+
+  it("blocks main-chain optimization until a JD is provided", async () => {
+    mockGetCareerResumeVersion.mockResolvedValue({
+      id: "resume-real-1",
+      profileId: "profile-1",
+      title: "resume title",
+      content: "resume body",
+      markdownContent: "resume body",
+    });
+
+    render(
+      <MemoryRouter
+        initialEntries={[`${ROUTES.resumeOptimize}?id=resume-real-1`]}
+      >
+        <Routes>
+          <Route
+            path={ROUTES.resumeOptimize}
+            element={<ResumeOptimizePage />}
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await screen.findByDisplayValue("resume body");
+
+    expect(
+      (
+        screen.getByTestId(
+          "resume-optimize-start-optimization",
+        ) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
+    expect(mockCreateCareerJob).not.toHaveBeenCalled();
+    expect(mockCreateCareerOptimization).not.toHaveBeenCalled();
   });
 
   it("creates a JD-backed interview session and navigates to the main-chain interview room", async () => {
@@ -245,6 +312,17 @@ describe("ResumeOptimizePage", () => {
         "/career/interviews/session-001",
       );
     });
+    expect(readCareerWorkspaceSnapshot()).toEqual({
+      profileId: "profile-1",
+      resumeVersionId: "resume-real-1",
+    });
+    expect(readCareerInterviewSessionBinding("session-001")).toEqual(
+      expect.objectContaining({
+        profileId: "profile-1",
+        resumeVersionId: "resume-real-1",
+        jdId: "job-001",
+      }),
+    );
     expect(await screen.findByText("interview-room-page")).toBeDefined();
   });
 
@@ -265,6 +343,9 @@ describe("ResumeOptimizePage", () => {
         content: "resume two body",
         markdownContent: "resume two body",
       });
+    mockCreateCareerJob.mockResolvedValue({
+      id: "job-opt-002",
+    });
     mockCreateCareerOptimization.mockResolvedValue({
       id: "task-123",
       status: "RUNNING",
@@ -290,6 +371,11 @@ describe("ResumeOptimizePage", () => {
     render(<RouterProvider router={router} />);
 
     await screen.findByDisplayValue("resume one body");
+    fireEvent.change(screen.getByTestId("resume-optimize-jd-textarea"), {
+      target: {
+        value: "Need React architecture and platform delivery experience.",
+      },
+    });
     fireEvent.click(screen.getByTestId("resume-optimize-start-optimization"));
     expect(await screen.findByText("task-123")).toBeDefined();
 
@@ -332,6 +418,7 @@ describe("ResumeOptimizePage", () => {
     expect(
       screen.getByTestId("resume-optimize-back-link").getAttribute("href"),
     ).toBe(ROUTES.previewResumeList);
+    expect(screen.getByRole("button", { name: /开始优化/ })).toBeDefined();
   });
 
   it("does not fall back to preview mock content on the main-chain route when the real resume load fails", async () => {

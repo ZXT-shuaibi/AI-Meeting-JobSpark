@@ -1,4 +1,7 @@
+import { isStaticPreviewEnabled } from "@/config/env";
 import { ROUTES } from "@/lib/constants";
+
+export const STATIC_PREVIEW_REPORT_SESSION_ID = "mock-session-001";
 
 type ReportLocationState = {
   sessionId?: string;
@@ -23,7 +26,11 @@ export const getReportSessionIdFromLocation = (location: {
 
   const fromSearch =
     new URLSearchParams(location.search || "").get("sessionId")?.trim() || "";
-  return fromSearch || null;
+  if (fromSearch) {
+    return fromSearch;
+  }
+
+  return isStaticPreviewEnabled() ? STATIC_PREVIEW_REPORT_SESSION_ID : null;
 };
 
 export const buildReportSearch = (sessionId: string | null) =>

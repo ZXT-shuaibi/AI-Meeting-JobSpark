@@ -34,6 +34,7 @@ describe("ResumeDetailPage", () => {
     expect(await screen.findByText("resume load failed")).toBeDefined();
     expect(screen.getByText("简历版本 resume-01")).toBeDefined();
     expect(screen.getByText("resumeVersionId: resume-01")).toBeDefined();
-    expect(screen.queryByText("AI 产品与前端协同")).toBeNull();
+    expect(screen.getByText(/目标方向：/)).toBeDefined();
+    expect(screen.queryByText("AI 产品与前端协同简历")).toBeNull();
   });
 });

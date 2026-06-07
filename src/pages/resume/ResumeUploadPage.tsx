@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, FileText, UploadCloud } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
+import { writeCareerWorkspaceSnapshot } from "@/lib/careerWorkspaceStorage";
 import { uploadCareerResume } from "@/services/careerService";
 
 import { defaultResumeId, uploadGuidance } from "./resumeMockData";
@@ -55,6 +56,10 @@ export default function ResumeUploadPage() {
       const result = await uploadCareerResume(file);
       setUploadedResumeVersionId(result.resumeVersionId);
       setUploadStatus(result.status);
+      writeCareerWorkspaceSnapshot({
+        profileId: result.profileId,
+        resumeVersionId: result.resumeVersionId,
+      });
     } catch (error) {
       setUploadError(
         error instanceof Error ? error.message : "Failed to upload resume",
@@ -91,8 +96,8 @@ export default function ResumeUploadPage() {
                 导入简历
               </h1>
               <p className="max-w-2xl text-base leading-7 text-slate-500">
-                上传
-                PDF，或在下一步直接粘贴正文，系统会把内容带入简历优化工作台。
+                上传 PDF、DOCX、Markdown 或文本简历，系统会解析并接入 HireSpark
+                的职业工作台主链路。
               </p>
             </div>
 
@@ -102,13 +107,14 @@ export default function ResumeUploadPage() {
                   <UploadCloud className="h-9 w-9 text-slate-400" />
                 </div>
                 <h2 className="mt-6 text-2xl font-semibold text-slate-900">
-                  点击或拖拽文件到此处
+                  点击或拖拽文件到这里
                 </h2>
                 <p
                   id="resume-upload-help"
                   className="mt-3 max-w-xl text-sm leading-7 text-slate-500"
                 >
-                  当前页面已经接入真实上传入口，联调阶段会继续补齐解析进度与版本识别反馈。
+                  主链路已经接到真实上传接口。上传完成后会保存 workspace
+                  上下文，方便后续继续查看简历和进入优化。
                 </p>
 
                 <input
@@ -136,10 +142,10 @@ export default function ResumeUploadPage() {
                     {isUploading ? "上传中..." : "选择简历文件"}
                   </label>
                   <span className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600">
-                    PDF
+                    PDF / DOCX / MD
                   </span>
                   <span className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600">
-                    最大 5MB
+                    建议 5MB 以内
                   </span>
                 </div>
               </div>
@@ -148,18 +154,18 @@ export default function ResumeUploadPage() {
             <div className="grid gap-4 md:grid-cols-3">
               <StepCard
                 step="01"
-                title="上传原始文件"
-                description="从本地导入现有版本，作为后续优化的基础。"
+                title="上传原始简历"
+                description="先把本地简历接入工作台，作为后续优化和面试的基础。"
               />
               <StepCard
                 step="02"
-                title="确认目标岗位"
-                description="在下一步补充岗位链接和 JD 描述。"
+                title="补充目标岗位"
+                description="下一步补充岗位链接或 JD 内容，继续进入定向优化。"
               />
               <StepCard
                 step="03"
-                title="进入定向优化"
-                description="围绕本轮投递生成匹配度、缺口与改写建议。"
+                title="进入优化链路"
+                description="围绕本次投递查看匹配度、缺口和改写建议。"
               />
             </div>
           </section>
@@ -168,7 +174,7 @@ export default function ResumeUploadPage() {
             <div className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
                 <FileText className="h-4 w-4 text-sky-500" />
-                后续会带入什么
+                上传后会带入什么
               </div>
               <div className="mt-5 space-y-3">
                 {uploadGuidance.map((item) => (
@@ -185,7 +191,8 @@ export default function ResumeUploadPage() {
             <div className="rounded-[30px] border border-slate-200 bg-slate-50 p-6">
               <p className="text-sm font-semibold text-slate-900">下一步</p>
               <p className="mt-3 text-sm leading-7 text-slate-500">
-                进入定向优化工作台后，可以继续补充简历正文、岗位链接和目标 JD。
+                上传完成后，可以直接进入定向优化，补充目标 JD
+                并继续后续职业链路。
               </p>
 
               <Button asChild className="mt-6 w-full rounded-full">
@@ -208,7 +215,7 @@ export default function ResumeUploadPage() {
                   已完成真实上传
                 </p>
                 <p className="mt-3 text-sm text-emerald-800">
-                  简历版本 ID：
+                  简历版本 ID:
                   <code className="ml-1 rounded bg-white/70 px-2 py-0.5 font-mono text-xs">
                     {uploadedResumeVersionId}
                   </code>

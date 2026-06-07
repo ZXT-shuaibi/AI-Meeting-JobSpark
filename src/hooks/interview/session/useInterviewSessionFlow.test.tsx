@@ -396,14 +396,14 @@ describe("useInterviewSessionFlow", () => {
     );
   });
 
-  it("navigates to the reachable no-session room when the session is cleared", async () => {
+  it("navigates back to /career when the session is cleared", async () => {
     const { result } = renderSessionFlow();
 
     await act(async () => {
       result.current.setInterviewerSessionId(null);
     });
 
-    expect(navigateMock).toHaveBeenCalledWith(ROUTES.interviewRoomEntry, {
+    expect(navigateMock).toHaveBeenCalledWith(ROUTES.career, {
       replace: true,
     });
   });

@@ -18,7 +18,7 @@ import {
   createWelcomeMessage,
 } from "@/hooks/interview/shared/interviewUtils";
 
-export function useInterviewMessageStream() {
+export function useInterviewMessageStream(interviewSessionId: string | null) {
   const [messages, setMessages] = useState<ChatMessage[]>(() => [
     createWelcomeMessage(),
   ]);
@@ -223,10 +223,12 @@ export function useInterviewMessageStream() {
           text: nextQuestion,
           autoPlay: true,
           cacheKey: questionKey,
+          provider: interviewSessionId ? "career-interview" : "legacy",
+          sessionId: interviewSessionId,
         },
       });
     },
-    [appendAssistantMessage],
+    [appendAssistantMessage, interviewSessionId],
   );
 
   const appendSystemMessage = useCallback(

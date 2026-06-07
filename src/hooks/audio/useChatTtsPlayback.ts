@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CHAT_MESSAGE_STATUS, type ChatMessage } from "@/lib/chat";
 import {
-  INTERVIEW_QUESTION_TTS_REQUEST,
   isAbortError,
+  synthesizeChatMessageTts,
 } from "@/hooks/audio/chatTtsPlayback.shared";
 import { useChatTtsAudioCache } from "@/hooks/audio/useChatTtsAudioCache";
 import { useChatTtsAudioElement } from "@/hooks/audio/useChatTtsAudioElement";
-import { xunfeiTtsService } from "@/services/xunfeiTtsService";
 
 export function useChatTtsPlayback(messages: ChatMessage[]) {
   const loadingControllerRef = useRef<AbortController | null>(null);
@@ -105,12 +104,12 @@ export function useChatTtsPlayback(messages: ChatMessage[]) {
           }
         }
 
-        const task = await xunfeiTtsService.synthesize(
+        const task = await synthesizeChatMessageTts(
           {
-            ...INTERVIEW_QUESTION_TTS_REQUEST,
+            ...message.tts,
             text: ttsText,
           },
-          { signal: controller.signal },
+          controller.signal,
         );
         const objectUrl = await resolvePlayableAudioUrl(
           task,
@@ -206,7 +205,9 @@ export function useChatTtsPlayback(messages: ChatMessage[]) {
       return;
     }
 
-    const stillExists = messages.some((message) => message.id === activeMessageId);
+    const stillExists = messages.some(
+      (message) => message.id === activeMessageId,
+    );
     if (!stillExists) {
       stopPlayback();
     }

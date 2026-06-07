@@ -791,6 +791,18 @@ const decodePreviewError = (bytes: Uint8Array) => {
   return normalized.length > 0 ? normalized : undefined;
 };
 
+const blobToBase64 = async (blob: Blob) => {
+  const buffer = await blob.arrayBuffer();
+  let binary = "";
+  const bytes = new Uint8Array(buffer);
+
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+
+  return btoa(binary);
+};
+
 export const interviewService = {
   createInterviewSession: async () => {
     return service.post<CreateInterviewSessionResult, Record<string, never>>(
@@ -955,21 +967,14 @@ export const interviewService = {
   evaluateInterviewDemeanor: async (
     params: EvaluateInterviewDemeanorParams,
   ) => {
-    const formData = new FormData();
-    formData.append(
-      "userPhoto",
-      params.userPhoto,
-      params.fileName || `demeanor-${Date.now()}.jpg`,
-    );
+    const imageBase64 = await blobToBase64(params.userPhoto);
 
-    return service.post<string, FormData>(
-      `/xunzhi/v1/interview/sessions/${encodeURIComponent(params.sessionId)}/demeanor-evaluation`,
-      formData,
+    return service.post<unknown, Record<string, unknown>>(
+      `/career/interviews/${encodeURIComponent(params.sessionId)}/demeanor/analyze`,
       {
-        timeout: INTERVIEW_LONG_TIMEOUT_MS,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+        consentGranted: true,
+        imageBase64,
+        sampledAt: new Date().toISOString(),
       },
     );
   },

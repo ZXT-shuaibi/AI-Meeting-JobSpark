@@ -59,7 +59,7 @@ export function useInterviewSessionFlow(user: InterviewFlowUser) {
     stopThinkingIndicator,
     cancelActiveQuestionStream,
     resetMessageStream,
-  } = useInterviewMessageStream();
+  } = useInterviewMessageStream(interviewerSessionId);
 
   const isReady = Boolean(interviewerSessionId) && !isInterviewFinished;
 
@@ -78,7 +78,7 @@ export function useInterviewSessionFlow(user: InterviewFlowUser) {
         navigate(buildInterviewRoomPath(nextValue), { replace: true });
         return;
       }
-      navigate(ROUTES.interviewRoomEntry, { replace: true });
+      navigate(ROUTES.career, { replace: true });
     },
     [navigate, persistInterviewerSessionId],
   );

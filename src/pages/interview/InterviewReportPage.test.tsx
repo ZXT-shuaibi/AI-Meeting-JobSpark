@@ -20,6 +20,24 @@ vi.mock("@/components/interview/report/InterviewReportHeader", () => ({
 describe("InterviewReportPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useInterviewReportDataMock.mockReturnValue({
+      isRecordLoading: false,
+      recordError: null,
+      resumeScore: null,
+      interviewScore: null,
+      compositeScore: null,
+      isCompositeEstimated: false,
+      radarPoints: [],
+      sortedSuggestions: [],
+      interviewDirection: null,
+      qaReviews: [],
+      reviewFeedback: {
+        overallComment: null,
+        highlights: [],
+        improvementTips: [],
+        nextActions: [],
+      },
+    });
   });
 
   it("loads the HireSpark report session and displays the overall score", () => {
@@ -69,5 +87,17 @@ describe("InterviewReportPage", () => {
     expect(
       screen.getByText("Tell me about a migration you led."),
     ).toBeDefined();
+  });
+
+  it("shows an honest empty state instead of pretending there is a report list", () => {
+    render(
+      <MemoryRouter initialEntries={["/career/interview-reports"]}>
+        <InterviewReportPage />
+      </MemoryRouter>,
+    );
+
+    expect(useInterviewReportDataMock).toHaveBeenCalledWith(null);
+    expect(screen.getByText("当前页不提供报告历史列表")).toBeDefined();
+    expect(screen.queryByText("面试问答回放")).toBeNull();
   });
 });

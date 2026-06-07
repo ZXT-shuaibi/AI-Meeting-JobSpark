@@ -118,6 +118,7 @@ export default function InterviewPage() {
             value={input}
             onChange={setInput}
             onSend={handleSend}
+            transcriptionSessionId={interview.sessionId}
             placeholder="输入你的回答，或点击麦克风开始语音作答..."
             disabled={!isReady || isSubmitting || resume.isUploading}
             showDefaultLeading={false}

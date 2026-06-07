@@ -146,10 +146,10 @@ export default function ResumeDetailPage() {
               简历上下文缺失
             </p>
             <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
-              这个预览入口需要先选中一份简历
+              这个入口需要先选择一份简历
             </h1>
             <p className="mt-3 text-sm leading-7 text-slate-500">
-              请返回简历列表重新选择，再进入详情页或定向优化工作台。
+              请先返回简历列表重新选择，再进入详情页或定向优化工作台。
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Button asChild className="rounded-full">

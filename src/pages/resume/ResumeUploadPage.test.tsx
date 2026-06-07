@@ -3,6 +3,10 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ROUTES } from "@/lib/constants";
+import {
+  CAREER_WORKSPACE_STORAGE_KEY,
+  type CareerWorkspaceSnapshot,
+} from "@/lib/careerWorkspaceStorage";
 import ResumeUploadPage from "./ResumeUploadPage";
 
 const { mockUploadCareerResume } = vi.hoisted(() => ({
@@ -23,6 +27,7 @@ type UploadResult = {
 describe("ResumeUploadPage", () => {
   beforeEach(() => {
     mockUploadCareerResume.mockReset();
+    window.localStorage.clear();
   });
 
   it("ignores a second file selection while an upload is already in flight", async () => {
@@ -126,5 +131,39 @@ describe("ResumeUploadPage", () => {
             `${ROUTES.resumeOptimize}?id=resume-real-1`,
         ),
     ).toBe(true);
+  });
+
+  it("persists the latest uploaded profile and resume ids for the main career workspace", async () => {
+    mockUploadCareerResume.mockResolvedValue({
+      documentId: "doc-1",
+      profileId: "profile-42",
+      resumeVersionId: "resume-real-42",
+      status: "PARSED",
+    });
+
+    render(
+      <MemoryRouter initialEntries={[ROUTES.resumeUpload]}>
+        <Routes>
+          <Route path={ROUTES.resumeUpload} element={<ResumeUploadPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    fireEvent.change(screen.getByLabelText("选择简历文件"), {
+      target: {
+        files: [
+          new File(["resume"], "resume.pdf", { type: "application/pdf" }),
+        ],
+      },
+    });
+
+    await screen.findByText("resume-real-42");
+
+    const persisted = window.localStorage.getItem(CAREER_WORKSPACE_STORAGE_KEY);
+    expect(persisted).not.toBeNull();
+
+    const snapshot = JSON.parse(persisted || "{}") as CareerWorkspaceSnapshot;
+    expect(snapshot.profileId).toBe("profile-42");
+    expect(snapshot.resumeVersionId).toBe("resume-real-42");
   });
 });

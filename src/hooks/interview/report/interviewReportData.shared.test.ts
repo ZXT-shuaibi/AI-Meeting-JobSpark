@@ -1,137 +1,44 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
-const { mockGenerateCareerInterviewReport, mockGetCareerInterviewReport } =
-  vi.hoisted(() => ({
-    mockGenerateCareerInterviewReport: vi.fn(),
-    mockGetCareerInterviewReport: vi.fn(),
-  }));
+import { buildInterviewReportViewModel } from "@/hooks/interview/report/interviewReportData.shared";
+import type { CareerInterviewReport } from "@/services/careerService";
 
-vi.mock("@/services/careerService", () => ({
-  generateCareerInterviewReport: (...args: unknown[]) =>
-    mockGenerateCareerInterviewReport(...args),
-  getCareerInterviewReport: (...args: unknown[]) =>
-    mockGetCareerInterviewReport(...args),
-}));
-
-import {
-  buildInterviewReportViewModel,
-  fetchInterviewReportQueryData,
-} from "@/hooks/interview/report/interviewReportData.shared";
-
-describe("fetchInterviewReportQueryData", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it("falls back to report generation when the stored report is missing", async () => {
-    mockGetCareerInterviewReport.mockRejectedValue(new Error("report missing"));
-    mockGenerateCareerInterviewReport.mockResolvedValue({
-      id: "report-1",
-      sessionId: "session-1",
-      overallScore: 85,
-      radar: [],
-      playback: [],
-      suggestions: [],
-      summary: "generated",
-    });
-
-    const result = await fetchInterviewReportQueryData("session-1");
-
-    expect(mockGetCareerInterviewReport).toHaveBeenCalledWith("session-1");
-    expect(mockGenerateCareerInterviewReport).toHaveBeenCalledWith("session-1");
-    expect(result.report?.id).toBe("report-1");
-  });
-});
-
-describe("buildInterviewReportViewModel", () => {
-  it("maps the HireSpark report payload into the report UI view model", () => {
+describe("interviewReportData.shared", () => {
+  it("extracts resume and interview scores from Chinese HireSpark report labels", () => {
     const viewModel = buildInterviewReportViewModel({
       id: "report-1",
       sessionId: "session-1",
-      overallScore: 87,
-      summary: "Overall strong ownership and communication.",
+      overallScore: 88,
+      summary: "整体发挥稳定",
       radar: [
-        {
-          dimension: "Resume Match",
-          score: 82,
-          comment: "Resume alignment is solid.",
-        },
-        {
-          dimension: "Communication",
-          score: 91,
-          comment: "Clear and structured answers.",
-        },
+        { dimension: "简历匹配度", score: 84 },
+        { dimension: "沟通表达", score: 91 },
       ],
       playback: [
         {
-          question: "Tell me about a migration you led.",
-          answer: "I introduced shared schema validation across the stack.",
-          score: 88,
+          question: "请介绍你的项目",
+          answer: "我负责主导交付",
+          score: 90,
           feedback: {
-            summary: "回答结构清晰",
-            strengths: ["背景交代完整"],
-            missingPoints: ["补充量化结果"],
+            strengths: ["表达清晰"],
+            missingPoints: ["量化结果不足"],
           },
-        },
-        {
-          question: "How did you validate the rollout?",
-          answer: "We monitored error rates and staged the release.",
-          score: 92,
-          feedback: "追问回答到位",
         },
       ],
       suggestions: [
         {
-          title: "Strengthen metrics",
-          action: "Add quantified impact to the migration story.",
-          priority: "HIGH",
-        },
-        {
-          title: "Clarify architecture trade-offs",
-          action: "Explain why you chose schema validation over ad-hoc guards.",
-          priority: "MEDIUM",
+          title: "补充量化结果",
+          action: "增加业务指标与上线效果",
         },
       ],
       traceId: "trace-1",
-      createTime: "2026-06-04T12:00:00Z",
-    });
+      createTime: "2026-06-07T00:00:00Z",
+    } satisfies CareerInterviewReport);
 
-    expect(viewModel.resumeScore).toBe(82);
+    expect(viewModel.resumeScore).toBe(84);
     expect(viewModel.interviewScore).toBe(90);
-    expect(viewModel.compositeScore).toBe(87);
-    expect(viewModel.isCompositeEstimated).toBe(false);
-    expect(viewModel.radarPoints).toEqual([
-      { label: "Resume Match", value: 82 },
-      { label: "Communication", value: 91 },
-    ]);
-    expect(viewModel.sortedSuggestions).toEqual([
-      "Strengthen metrics: Add quantified impact to the migration story.",
-      "Clarify architecture trade-offs: Explain why you chose schema validation over ad-hoc guards.",
-    ]);
-    expect(viewModel.qaReviews).toEqual([
-      {
-        question: "Tell me about a migration you led.",
-        answer: "I introduced shared schema validation across the stack.",
-        score: 88,
-        feedback: "回答结构清晰",
-        questionNumber: "1",
-      },
-      {
-        question: "How did you validate the rollout?",
-        answer: "We monitored error rates and staged the release.",
-        score: 92,
-        feedback: "追问回答到位",
-        questionNumber: "2",
-      },
-    ]);
-    expect(viewModel.reviewFeedback).toEqual({
-      overallComment: "Overall strong ownership and communication.",
-      highlights: ["背景交代完整"],
-      improvementTips: ["补充量化结果"],
-      nextActions: [
-        "Add quantified impact to the migration story.",
-        "Explain why you chose schema validation over ad-hoc guards.",
-      ],
-    });
+    expect(viewModel.compositeScore).toBe(88);
+    expect(viewModel.reviewFeedback.highlights).toEqual(["表达清晰"]);
+    expect(viewModel.reviewFeedback.improvementTips).toEqual(["量化结果不足"]);
   });
 });

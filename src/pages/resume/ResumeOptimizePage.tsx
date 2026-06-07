@@ -21,8 +21,12 @@ import {
   useSearchParams,
 } from "react-router-dom";
 
-import { buildInterviewRoomPath } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
+import { buildInterviewRoomPath } from "@/lib/constants";
+import {
+  writeCareerInterviewSessionBinding,
+  writeCareerWorkspaceSnapshot,
+} from "@/lib/careerWorkspaceStorage";
 import {
   createCareerInterview,
   createCareerJob,
@@ -199,13 +203,12 @@ function ResumeOptimizeWorkspace({
     (isPreview
       ? optimizationOverview.matchSummary
       : "创建优化任务后，这里会展示与岗位匹配相关的摘要结论。");
+  const hasJobDraft = Boolean(jdText.trim() || jdLink.trim());
   const canStartOptimization = isPreview
     ? Boolean(resolvedResumeId)
-    : Boolean(resumeVersion?.id) && !resumeLoadError;
+    : Boolean(resumeVersion?.id) && !resumeLoadError && hasJobDraft;
   const canStartInterview =
-    canStartOptimization &&
-    Boolean(resolvedResumeId) &&
-    Boolean(jdText.trim() || jdLink.trim());
+    canStartOptimization && Boolean(resolvedResumeId) && hasJobDraft;
 
   const infoPills = useMemo(
     () => [
@@ -218,7 +221,9 @@ function ResumeOptimizeWorkspace({
 
   const handleStartOptimization = async () => {
     if (!canStartOptimization || !resolvedResumeId) {
-      setOptimizationError("请先确认简历版本加载成功，再开始优化。");
+      setOptimizationError(
+        "请先确认简历版本加载成功，并补充目标 JD，再开始优化。",
+      );
       return;
     }
 
@@ -232,9 +237,18 @@ function ResumeOptimizeWorkspace({
     setIsCreatingOptimization(true);
 
     try {
+      const job = await createJobFromDraft({
+        jdText,
+        jdLink,
+      });
+
+      if (!job.id) {
+        throw new Error("Created job is missing id");
+      }
+
       const createdTask = await createCareerOptimization({
         resumeVersionId: resolvedResumeId,
-        jdId: undefined,
+        jdId: job.id,
         alignmentReportId: undefined,
       });
       setOptimizationTask(createdTask);
@@ -312,10 +326,9 @@ function ResumeOptimizeWorkspace({
     setIsCreatingInterview(true);
 
     try {
-      const job = await createCareerJob({
-        rawText: jdText.trim(),
-        sourceLocation: jdLink.trim(),
-        sourceType: "MANUAL",
+      const job = await createJobFromDraft({
+        jdText,
+        jdLink,
       });
 
       if (!job.id) {
@@ -327,6 +340,15 @@ function ResumeOptimizeWorkspace({
         throw new Error("Created interview session is missing id");
       }
 
+      writeCareerWorkspaceSnapshot({
+        profileId: resumeVersion?.profileId || null,
+        resumeVersionId: resolvedResumeId,
+      });
+      writeCareerInterviewSessionBinding(session.id, {
+        profileId: resumeVersion?.profileId || null,
+        resumeVersionId: resolvedResumeId,
+        jdId: job.id,
+      });
       navigate(buildInterviewRoomPath(session.id));
     } catch (error) {
       setInterviewLaunchError(
@@ -712,6 +734,20 @@ function appendProgressEvent(
   nextEvent: CareerProgressEvent,
 ) {
   return [...(events || []), nextEvent];
+}
+
+async function createJobFromDraft({
+  jdText,
+  jdLink,
+}: {
+  jdText: string;
+  jdLink: string;
+}) {
+  return createCareerJob({
+    rawText: jdText.trim(),
+    sourceLocation: jdLink.trim(),
+    sourceType: "MANUAL",
+  });
 }
 
 function mergeOptimizationTask(

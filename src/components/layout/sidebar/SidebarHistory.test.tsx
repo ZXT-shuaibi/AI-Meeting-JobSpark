@@ -1,25 +1,11 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import { useLocation } from "react-router-dom";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import SidebarHistory from "@/components/layout/sidebar/SidebarHistory";
 
-const navigateMock = vi.fn();
-const useLocationMock = vi.fn();
 const controllerMock = vi.fn();
-const sidebarInterviewListMock = vi.fn();
-
-vi.mock("react-router-dom", async () => {
-  const actual =
-    await vi.importActual<typeof import("react-router-dom")>(
-      "react-router-dom",
-    );
-  return {
-    ...actual,
-    useNavigate: () => navigateMock,
-    useLocation: () => useLocationMock(),
-  };
-});
 
 vi.mock("@/components/ui/scroll-area", () => ({
   ScrollArea: function MockScrollArea(
@@ -39,77 +25,56 @@ vi.mock("@/components/layout/sidebar/SidebarSessionList", () => ({
   },
 }));
 
-vi.mock("@/components/layout/sidebar/SidebarInterviewList", () => ({
-  default: function MockSidebarInterviewList(props: {
-    onOpenRecord: (sessionId: string) => void;
-    activeSessionId?: string | null;
-    activePathname: string;
-  }) {
-    sidebarInterviewListMock(props);
-    return (
-      <button type="button" onClick={() => props.onOpenRecord("session-1")}>
-        open-record
-      </button>
+vi.mock("react-router-dom", async () => {
+  const actual =
+    await vi.importActual<typeof import("react-router-dom")>(
+      "react-router-dom",
     );
-  },
-}));
+  return {
+    ...actual,
+    useLocation: vi.fn(),
+    useNavigate: vi.fn(),
+  };
+});
 
 describe("SidebarHistory", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useLocationMock.mockReturnValue({
-      pathname: "/career/interview-reports",
+    vi.mocked(useLocation).mockReturnValue({
+      pathname: "/chat",
       search: "",
+      hash: "",
       state: null,
+      key: "test",
     });
     controllerMock.mockReturnValue({
-      view: "interviews",
-      setView: vi.fn(),
+      view: "sessions",
       conversations: [],
-      interviewRecords: [],
       hasNextPage: false,
-      hasNextInterviewPage: false,
       isFetchingNextPage: false,
-      isFetchingNextInterviewPage: false,
       handleScroll: vi.fn(),
     });
   });
 
-  it("opens interview history records on the main-chain report detail route", () => {
+  it("shows only session history on the aligned main chain", () => {
     render(
       <MemoryRouter>
         <SidebarHistory />
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "open-record" }));
-
-    expect(navigateMock).toHaveBeenCalledWith(
-      "/career/interview-reports/session-1",
-      {
-        state: { sessionId: "session-1" },
-      },
-    );
+    expect(screen.getByText("历史会话")).toBeDefined();
+    expect(screen.getByText("session-list")).toBeDefined();
+    expect(screen.queryByText("历史面试")).toBeNull();
   });
 
-  it("keeps the legacy report detail page tied to the active interview record", () => {
-    useLocationMock.mockReturnValue({
-      pathname: "/interview/report/detail",
-      search: "?sessionId=session-legacy",
-      state: null,
-    });
-
-    render(
+  it("renders nothing when the sidebar is collapsed", () => {
+    const { container } = render(
       <MemoryRouter>
-        <SidebarHistory />
+        <SidebarHistory isCollapsed />
       </MemoryRouter>,
     );
 
-    expect(sidebarInterviewListMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        activePathname: "/interview/report/detail",
-        activeSessionId: "session-legacy",
-      }),
-    );
+    expect(container.innerHTML).toBe("");
   });
 });

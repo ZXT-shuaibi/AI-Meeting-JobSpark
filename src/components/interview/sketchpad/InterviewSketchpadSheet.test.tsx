@@ -11,7 +11,7 @@ const EXISTING_TRANSCRIPTION = "existing transcription result";
 const MERGED_TRANSCRIPTION = `${EXISTING_TRANSCRIPTION}\n\n${TRANSCRIPTION_RESULT}`;
 
 vi.mock("@/hooks/useAudioToText", () => ({
-  useAudioToText: () => useAudioToTextMock(),
+  useAudioToText: (...args: unknown[]) => useAudioToTextMock(...args),
 }));
 
 vi.mock("@/services/interviewService", () => ({
@@ -146,6 +146,10 @@ describe("InterviewSketchpadSheet", () => {
     );
 
     renderSheet();
+
+    expect(useAudioToTextMock).toHaveBeenCalledWith({
+      interviewSessionId: "session-1",
+    });
 
     await waitFor(() => {
       const textareas = screen.getAllByRole("textbox");

@@ -91,6 +91,25 @@ export interface CareerInterviewReport {
   createTime: string | null;
 }
 
+export interface CareerInterviewTtsPlan {
+  enabled: boolean;
+  status: string | null;
+  chunks: string[];
+  cacheKey: string | null;
+  cancelKey: string | null;
+  fallbackText: string | null;
+  degradeReason: string | null;
+  voice: string | null;
+  cacheTtlSeconds: number | null;
+  taskId: string | null;
+  taskStatus: string | null;
+  audioBase64: string | null;
+  audioUrl: string | null;
+  pybufContent: string | null;
+  completed: boolean;
+  success: boolean;
+}
+
 export interface CareerProgressStreamHandlers {
   onConnected?: (payload: unknown) => void;
   onProgress?: (event: CareerProgressEvent) => void;
@@ -118,6 +137,11 @@ export interface SubmitCareerInterviewAnswerPayload {
   answerRevision?: string;
   answerSource?: string;
   answerSourceMeta?: UnknownRecord;
+}
+
+export interface PlanCareerInterviewTextToSpeechPayload {
+  turnId?: string;
+  text?: string;
 }
 
 export interface CareerProgressStreamHandle {
@@ -148,6 +172,20 @@ const normalizeNumber = (value: unknown): number | null => {
     return Number.isFinite(parsed) ? parsed : null;
   }
   return null;
+};
+
+const normalizeBoolean = (value: unknown): boolean => {
+  if (typeof value === "boolean") {
+    return value;
+  }
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    return normalized === "true" || normalized === "1";
+  }
+  if (typeof value === "number") {
+    return value !== 0;
+  }
+  return false;
 };
 
 const toRecord = (value: unknown): UnknownRecord =>
@@ -348,6 +386,62 @@ const normalizeInterviewReport = (payload: unknown): CareerInterviewReport => {
   };
 };
 
+const normalizeInterviewTtsPlan = (
+  payload: unknown,
+): CareerInterviewTtsPlan => {
+  const record = toRecord(payload);
+  return {
+    enabled: normalizeBoolean(record.enabled),
+    status: normalizeString(record.status),
+    chunks: toArray(record.chunks)
+      .map((item) => normalizeString(item))
+      .filter((item): item is string => Boolean(item)),
+    cacheKey:
+      normalizeString(record.cacheKey) ??
+      normalizeString(record.cache_key) ??
+      null,
+    cancelKey:
+      normalizeString(record.cancelKey) ??
+      normalizeString(record.cancel_key) ??
+      null,
+    fallbackText:
+      normalizeString(record.fallbackText) ??
+      normalizeString(record.fallback_text) ??
+      null,
+    degradeReason:
+      normalizeString(record.degradeReason) ??
+      normalizeString(record.degrade_reason) ??
+      null,
+    voice: normalizeString(record.voice) ?? null,
+    cacheTtlSeconds:
+      normalizeNumber(record.cacheTtlSeconds) ??
+      normalizeNumber(record.cache_ttl_seconds) ??
+      null,
+    taskId:
+      normalizeString(record.taskId) ?? normalizeString(record.task_id) ?? null,
+    taskStatus:
+      normalizeString(record.taskStatus) ??
+      normalizeString(record.task_status) ??
+      null,
+    audioBase64:
+      normalizeString(record.audioBase64) ??
+      normalizeString(record.audio_base64) ??
+      normalizeString(record.pybufContent) ??
+      normalizeString(record.pybuf_content) ??
+      null,
+    audioUrl:
+      normalizeString(record.audioUrl) ??
+      normalizeString(record.audio_url) ??
+      null,
+    pybufContent:
+      normalizeString(record.pybufContent) ??
+      normalizeString(record.pybuf_content) ??
+      null,
+    completed: normalizeBoolean(record.completed),
+    success: normalizeBoolean(record.success),
+  };
+};
+
 const normalizeOptimizationTask = (
   payload: HireSparkCareerOptimizationTaskDto & UnknownRecord,
 ): CareerOptimizationTask => {
@@ -538,6 +632,17 @@ export const getCareerResumeVersion = async (
   return normalizeResumeVersion(response);
 };
 
+export const listCareerResumeVersions = async (
+  profileId: string,
+): Promise<CareerResumeVersion[]> => {
+  const response = await service.get<unknown[]>(
+    `/career/profiles/${encodeURIComponent(profileId)}/versions`,
+  );
+  return Array.isArray(response)
+    ? response.map((item) => normalizeResumeVersion(item))
+    : [];
+};
+
 export const createCareerJob = async (
   payload: CreateCareerJobPayload,
 ): Promise<CareerJob> => {
@@ -618,6 +723,17 @@ export const finishCareerInterview = async (sessionId: string) => {
     `/career/interviews/${encodeURIComponent(sessionId)}/finish`,
     {},
   );
+};
+
+export const planCareerInterviewTextToSpeech = async (
+  sessionId: string,
+  payload: PlanCareerInterviewTextToSpeechPayload,
+): Promise<CareerInterviewTtsPlan> => {
+  const response = await service.post<UnknownRecord>(
+    `/career/interviews/${encodeURIComponent(sessionId)}/tts/plan`,
+    payload,
+  );
+  return normalizeInterviewTtsPlan(response);
 };
 
 export const generateCareerInterviewReport = async (

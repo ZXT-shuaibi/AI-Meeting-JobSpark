@@ -20,6 +20,7 @@ vi.mock("@/lib/request", () => ({
 
 import {
   createCareerInterviewProgressStream,
+  planCareerInterviewTextToSpeech,
   createCareerInterviewTranscriptionUrl,
   createCareerOptimizationProgressStream,
 } from "./careerService";
@@ -128,5 +129,30 @@ describe("careerService progress stream", () => {
     expect(createCareerInterviewTranscriptionUrl("session-2")).toBe(
       "ws://localhost:8080/career/interviews/session-2/transcription/ws?Authorization=token-789",
     );
+  });
+
+  it("plans career interview TTS with the session-scoped HireSpark endpoint", async () => {
+    const requestModule = await import("@/lib/request");
+    vi.mocked(requestModule.default.post).mockResolvedValue({
+      enabled: true,
+      completed: true,
+      success: true,
+      audioBase64: "QQ==",
+      audioUrl: null,
+    });
+
+    const result = await planCareerInterviewTextToSpeech("session-3", {
+      turnId: "turn-5",
+      text: "请介绍一下你的项目。",
+    });
+
+    expect(requestModule.default.post).toHaveBeenCalledWith(
+      "/career/interviews/session-3/tts/plan",
+      {
+        turnId: "turn-5",
+        text: "请介绍一下你的项目。",
+      },
+    );
+    expect(result.audioBase64).toBe("QQ==");
   });
 });

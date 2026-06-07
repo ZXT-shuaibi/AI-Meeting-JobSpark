@@ -8,6 +8,7 @@ import {
   getCareerInterviewReport,
   type CareerInterviewReport,
 } from "@/services/careerService";
+import { STATIC_PREVIEW_REPORT_SESSION_ID } from "@/lib/interviewReportRoute";
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -25,6 +26,72 @@ export type InterviewReportViewModel = {
   interviewDirection: string | null;
   qaReviews: QaReview[];
   reviewFeedback: ReviewFeedback;
+};
+
+export const STATIC_PREVIEW_INTERVIEW_DIRECTION = "前端 / AI 产品岗位";
+
+export const STATIC_PREVIEW_INTERVIEW_REPORT: CareerInterviewReport = {
+  id: "mock-report-001",
+  sessionId: STATIC_PREVIEW_REPORT_SESSION_ID,
+  overallScore: 89,
+  summary:
+    "整体表现稳定，项目表达清晰，能够把业务目标、技术判断和结果复盘串起来，已经具备较强的一面表达基础。",
+  radar: [
+    { dimension: "简历匹配度", score: 84 },
+    { dimension: "沟通表达", score: 91 },
+    { dimension: "项目拆解", score: 88 },
+    { dimension: "问题分析", score: 90 },
+    { dimension: "岗位理解", score: 92 },
+  ],
+  playback: [
+    {
+      question: "请介绍一个你主导推进的项目，并说明你的核心贡献。",
+      answer:
+        "我负责把一套内部协作工具从零搭建到可交付版本，主导需求梳理、前端架构搭建和核心交互实现，最后把交付周期缩短到两周内。",
+      score: 90,
+      feedback: {
+        summary: "回答结构完整，能清晰交代背景、动作和结果。",
+        strengths: ["项目角色清晰", "结果导向明确"],
+        missingPoints: ["可以补充更量化的业务指标"],
+      },
+    },
+    {
+      question: "如果再做一次，你会优先优化哪个环节？",
+      answer:
+        "我会更早拉齐设计和研发的边界，先把状态流转和异常场景定义清楚，减少后期反复返工。",
+      score: 87,
+      feedback: {
+        summary: "有复盘意识，能指出流程问题。",
+        strengths: ["体现了协作意识"],
+        weaknesses: ["可以再补一个具体案例说明判断依据"],
+      },
+    },
+    {
+      question: "你如何判断这次交付是成功的？",
+      answer:
+        "我会看三个指标：业务是否真正上线使用、协作成本是否下降，以及后续是否能在这套方案上持续扩展。",
+      score: 89,
+      feedback: "评价维度明确，但还可以补充一两个实际数据。",
+    },
+  ],
+  suggestions: [
+    {
+      title: "补强量化结果",
+      action:
+        "把项目收益改写成明确指标，例如效率提升、交付时间缩短或用户覆盖范围。",
+    },
+    {
+      title: "增强岗位贴合度",
+      action:
+        "针对目标岗位，把 AI、协作设计、复杂交互等关键词前置到项目总结中。",
+    },
+    {
+      title: "准备追问素材",
+      action: "为关键项目各准备 1 个技术难点、1 个协作冲突和 1 个复盘优化点。",
+    },
+  ],
+  traceId: "mock-trace-001",
+  createTime: "2026-06-06T00:00:00Z",
 };
 
 const toRecord = (value: unknown): UnknownRecord | null => {
@@ -232,7 +299,7 @@ const extractInterviewScore = (
   }
 
   const radarMatch = radarPoints.find((item) =>
-    /interview|communication|answer|面试|回答/i.test(item.label),
+    /interview|communication|answer|面试|回答|沟通/i.test(item.label),
   );
   return radarMatch?.value ?? null;
 };

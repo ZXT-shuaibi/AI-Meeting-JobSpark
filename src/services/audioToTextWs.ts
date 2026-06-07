@@ -8,10 +8,76 @@ import {
   resolveAudioTranscriptionEvent,
   type AudioToTextIncomingMessage,
 } from "@/lib/audioTranscription";
+import { mapHireSparkTranscriptionPacket } from "@/adapters/hirespark/transcriptionAdapter";
+import { createCareerInterviewTranscriptionUrl } from "@/services/careerService";
+
+type AudioToTextWebSocketMode = "legacy" | "career-interview";
+
+type LegacyAudioToTextWebSocketConfig = {
+  mode?: "legacy";
+  userId: string;
+};
+
+type CareerInterviewAudioToTextWebSocketConfig = {
+  mode: "career-interview";
+  interviewSessionId: string;
+};
+
+type AudioToTextWebSocketConfig =
+  | LegacyAudioToTextWebSocketConfig
+  | CareerInterviewAudioToTextWebSocketConfig;
+
+const normalizeString = (value: unknown) => {
+  if (typeof value !== "string") {
+    return "";
+  }
+  return value.trim();
+};
+
+const resolveCareerPacketText = (message: AudioToTextIncomingMessage) =>
+  normalizeString(message.fullText) ||
+  normalizeString(message.displayText) ||
+  normalizeString(message.text) ||
+  normalizeString(message.data);
+
+const resolveCareerInterviewEvent = (message: AudioToTextIncomingMessage) => {
+  switch (message.type) {
+    case "connected":
+      return { kind: "connected" } as const;
+    case "transcription_started":
+      return { kind: "reset" } as const;
+    case "transcription_stopped":
+    case "status":
+    case "transcription_already_started":
+    case "transcription_already_stopped":
+      return { kind: "control" } as const;
+    case "heartbeat":
+    case "pong":
+      return { kind: "heartbeat" } as const;
+    case "error":
+      return {
+        kind: "error",
+        message:
+          normalizeString(message.message) ||
+          resolveCareerPacketText(message) ||
+          "Transcription error",
+      } as const;
+    default: {
+      const event = mapHireSparkTranscriptionPacket({
+        type: message.type,
+        text: resolveCareerPacketText(message),
+        data: normalizeString(message.data),
+        isFinal: message.isFinalPacket ?? message.type === "final",
+      });
+      return event;
+    }
+  }
+};
 
 export class AudioToTextWebSocket {
   private ws: WebSocket | null = null;
   private url: string;
+  private mode: AudioToTextWebSocketMode;
   private pingInterval: ReturnType<typeof setInterval> | null = null;
   private pendingBinaryQueue: Array<ArrayBuffer | Blob> = [];
   private readonly maxPendingBinaryChunks = 24;
@@ -25,15 +91,21 @@ export class AudioToTextWebSocket {
   public onConnected?: () => void;
   public onDisconnected?: () => void;
 
-  constructor(userId: string) {
-    this.url = this.buildWebSocketUrl(userId);
+  constructor(config: AudioToTextWebSocketConfig | string) {
+    const normalizedConfig =
+      typeof config === "string" ? { userId: config } : config;
+    this.mode =
+      normalizedConfig.mode === "career-interview"
+        ? "career-interview"
+        : "legacy";
+    this.url = this.buildWebSocketUrl(normalizedConfig);
   }
 
   private resolveConfiguredWebSocketBaseUrl() {
     return resolveWsBaseUrl(import.meta.env.VITE_WS_BASE_URL);
   }
 
-  private buildWebSocketUrl(userId: string) {
+  private buildLegacyWebSocketUrl(userId: string) {
     const wsBase = this.resolveWebSocketBaseUrl();
     const apiBase = resolveApiBaseUrl(import.meta.env.VITE_API_BASE_URL);
     const path = `${apiBase}/xunzhi/v1/xunfei/audio-to-text/${encodeURIComponent(userId)}`;
@@ -46,6 +118,14 @@ export class AudioToTextWebSocket {
     const query = new URLSearchParams();
     query.set("token", token);
     return `${wsBase}${path}?${query.toString()}`;
+  }
+
+  private buildWebSocketUrl(config: AudioToTextWebSocketConfig) {
+    if (config.mode === "career-interview") {
+      return createCareerInterviewTranscriptionUrl(config.interviewSessionId);
+    }
+
+    return this.buildLegacyWebSocketUrl(config.userId);
   }
 
   private resolveWebSocketBaseUrl() {
@@ -110,7 +190,10 @@ export class AudioToTextWebSocket {
   }
 
   private handleMessage(data: AudioToTextIncomingMessage) {
-    const event = resolveAudioTranscriptionEvent(data);
+    const event =
+      this.mode === "career-interview"
+        ? resolveCareerInterviewEvent(data)
+        : resolveAudioTranscriptionEvent(data);
     if (!this.shouldApplyEvent(data, event)) {
       return;
     }
@@ -206,14 +289,12 @@ export class AudioToTextWebSocket {
 
   private shouldApplyEvent(
     message: AudioToTextIncomingMessage,
-    event: ReturnType<typeof resolveAudioTranscriptionEvent>,
+    event:
+      | ReturnType<typeof resolveAudioTranscriptionEvent>
+      | ReturnType<typeof resolveCareerInterviewEvent>,
   ) {
     const text =
-      "text" in event
-        ? event.text
-        : "message" in event
-          ? event.message
-          : "";
+      "text" in event ? event.text : "message" in event ? event.message : "";
     const nextKey = `${event.kind}:${message.type ?? ""}:${text}`;
     const nextTimestamp =
       typeof message.timestamp === "number" ? message.timestamp : null;

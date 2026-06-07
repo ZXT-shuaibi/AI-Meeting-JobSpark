@@ -100,11 +100,11 @@ export const appRoutes: RouteObject[] = [
           },
           {
             path: ROUTES.interviewRoomEntry,
-            element: withRouteSuspense(<InterviewPage />),
+            element: <Navigate to={ROUTES.career} replace />,
           },
           {
             path: "/interview/room",
-            element: withRouteSuspense(<InterviewPage />),
+            element: <Navigate to={ROUTES.career} replace />,
           },
           {
             path: "/interview/room/:sessionId",

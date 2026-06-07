@@ -168,7 +168,7 @@ describe("appRoutes", () => {
     expect(router.state.location.pathname).toBe("/career/interviews/session-1");
   });
 
-  it("keeps /career/interviews/room reachable as the no-session interview entry", async () => {
+  it("redirects /career/interviews/room back to /career for the aligned interview start flow", async () => {
     useAppSelectorMock.mockImplementation((selector) =>
       selector({ user: { isAuthenticated: true } }),
     );
@@ -179,8 +179,8 @@ describe("appRoutes", () => {
 
     render(<RouterProvider router={router} />);
 
-    expect(await screen.findByText("interview-page")).toBeDefined();
-    expect(router.state.location.pathname).toBe(ROUTES.interviewRoomEntry);
+    expect(await screen.findByText("resume-list-page")).toBeDefined();
+    expect(router.state.location.pathname).toBe(ROUTES.career);
   });
 
   it("matches the new /career/interview-reports/:sessionId route", async () => {

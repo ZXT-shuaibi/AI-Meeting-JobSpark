@@ -27,7 +27,9 @@ export default function InterviewReportDetailPage() {
     reviewFeedback,
   } = useInterviewReportData(reportSessionId);
 
-  const reportBackLink = `${ROUTES.interviewReport}${buildReportSearch(reportSessionId)}`;
+  const reportBackLink = reportSessionId
+    ? `${ROUTES.interviewReport}${buildReportSearch(reportSessionId)}`
+    : ROUTES.career;
 
   return (
     <div className="h-full overflow-y-auto bg-slate-50/60">
@@ -58,35 +60,37 @@ export default function InterviewReportDetailPage() {
             </Button>
           </div>
 
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-              <div className="text-sm text-slate-500">简历得分</div>
-              <div className="mt-1 text-2xl font-semibold text-slate-900">
-                {scoreText(resumeScore)}
+          {reportSessionId ? (
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+                <div className="text-sm text-slate-500">简历得分</div>
+                <div className="mt-1 text-2xl font-semibold text-slate-900">
+                  {scoreText(resumeScore)}
+                </div>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+                <div className="text-sm text-slate-500">面试得分</div>
+                <div className="mt-1 text-2xl font-semibold text-slate-900">
+                  {scoreText(interviewScore)}
+                </div>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+                <div className="text-sm text-slate-500">综合得分</div>
+                <div className="mt-1 text-2xl font-semibold text-slate-900">
+                  {scoreText(compositeScore)}
+                </div>
               </div>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-              <div className="text-sm text-slate-500">面试得分</div>
-              <div className="mt-1 text-2xl font-semibold text-slate-900">
-                {scoreText(interviewScore)}
-              </div>
-            </div>
-            <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-              <div className="text-sm text-slate-500">综合得分</div>
-              <div className="mt-1 text-2xl font-semibold text-slate-900">
-                {scoreText(compositeScore)}
-              </div>
-            </div>
-          </div>
+          ) : null}
         </Card>
 
         {!reportSessionId ? (
           <Card className="border-amber-100 bg-amber-50 p-5 text-amber-700">
-            未获取到会话 ID，请从面试报告页进入详情页。
+            当前未获取到面试会话 ID。请从已完成的面试报告进入详情页。
           </Card>
         ) : null}
 
-        {reviewFeedback.overallComment ? (
+        {reportSessionId && reviewFeedback.overallComment ? (
           <Card className="border-slate-200 p-6">
             <div className="flex items-center gap-2 text-base font-medium text-slate-900">
               <FileSearch className="h-4 w-4 text-slate-500" />
@@ -98,12 +102,14 @@ export default function InterviewReportDetailPage() {
           </Card>
         ) : null}
 
-        <InterviewQaReplayCard
-          qaReviews={qaReviews}
-          isRecordLoading={isRecordLoading}
-          recordError={recordError}
-          variant="detail"
-        />
+        {reportSessionId ? (
+          <InterviewQaReplayCard
+            qaReviews={qaReviews}
+            isRecordLoading={isRecordLoading}
+            recordError={recordError}
+            variant="detail"
+          />
+        ) : null}
       </div>
     </div>
   );
