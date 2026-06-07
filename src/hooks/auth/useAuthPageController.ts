@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { ROUTES } from "@/lib/constants";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { clearError, loginUser } from "@/store/slices/userSlice";
-import { authService } from "@/services/authService";
 
 export type AuthMode = "login" | "register";
 
@@ -18,6 +17,10 @@ const initialFormData: AuthFormData = {
   password: "",
   confirmPassword: "",
 };
+
+const REQUIRED_FIELDS_MESSAGE = "Please enter your username and password.";
+const REGISTER_UNAVAILABLE_MESSAGE =
+  "Registration is not available in this phase.";
 
 type AuthRedirectState = {
   from?: {
@@ -57,7 +60,7 @@ const normalizeInAppRedirect = (value: unknown): string | null => {
 export function useAuthPageController() {
   const [mode, setMode] = useState<AuthMode>("login");
   const [formData, setFormData] = useState<AuthFormData>(initialFormData);
-  const [registerLoading, setRegisterLoading] = useState(false);
+  const [registerLoading] = useState(false);
   const [localError, setLocalError] = useState("");
 
   const dispatch = useAppDispatch();
@@ -71,7 +74,7 @@ export function useAuthPageController() {
     if (isAuthenticated) {
       const redirectState = location.state as AuthRedirectState | null;
       const redirectPath =
-        normalizeInAppRedirect(redirectState?.from) ?? ROUTES.home;
+        normalizeInAppRedirect(redirectState?.from) ?? ROUTES.career;
       navigate(redirectPath, { replace: true });
     }
     return () => {
@@ -80,6 +83,13 @@ export function useAuthPageController() {
   }, [isAuthenticated, location.state, navigate, dispatch]);
 
   const switchMode = (nextMode: AuthMode) => {
+    if (nextMode === "register") {
+      setMode("login");
+      setLocalError(REGISTER_UNAVAILABLE_MESSAGE);
+      dispatch(clearError());
+      return;
+    }
+
     setMode(nextMode);
     setLocalError("");
     dispatch(clearError());
@@ -96,38 +106,18 @@ export function useAuthPageController() {
 
   const handleSubmit = async () => {
     if (!formData.username || !formData.password) {
-      setLocalError("请输入用户名和密码");
+      setLocalError(REQUIRED_FIELDS_MESSAGE);
       return;
     }
 
-    if (mode === "login") {
-      dispatch(
-        loginUser({ username: formData.username, password: formData.password }),
-      );
+    if (mode !== "login") {
+      setLocalError(REGISTER_UNAVAILABLE_MESSAGE);
       return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
-      setLocalError("两次输入的密码不一致");
-      return;
-    }
-
-    setRegisterLoading(true);
-    try {
-      await authService.register({
-        username: formData.username,
-        password: formData.password,
-      });
-      setMode("login");
-      setLocalError("");
-      alert("注册成功，请登录");
-    } catch (submitError: unknown) {
-      const message =
-        submitError instanceof Error ? submitError.message : "注册失败";
-      setLocalError(message);
-    } finally {
-      setRegisterLoading(false);
-    }
+    dispatch(
+      loginUser({ username: formData.username, password: formData.password }),
+    );
   };
 
   return {

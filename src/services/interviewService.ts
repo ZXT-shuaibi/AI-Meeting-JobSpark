@@ -1,6 +1,14 @@
 import service, { assertRequestAuthorized, buildApiUrl } from "@/lib/request";
 import { AppError, ErrorCode } from "@/lib/errors";
 import type { AxiosRequestConfig } from "axios";
+import {
+  finishCareerInterview,
+  getCareerInterview,
+  getCareerInterviewNextQuestion,
+  submitCareerInterviewAnswer,
+  type CareerInterviewSession,
+  type CareerInterviewTurn,
+} from "@/services/careerService";
 
 const INTERVIEW_LONG_TIMEOUT_MS = 180000;
 
@@ -204,12 +212,6 @@ export interface AnswerInterviewQuestionResult {
   missingPoints?: string[] | Record<string, string>;
   finished?: boolean;
 }
-
-type AnswerInterviewQuestionJsonPayload = {
-  questionNumber: string;
-  answerContent?: string;
-  requestId?: string;
-};
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -672,32 +674,133 @@ const normalizeRequiredQuestionNumber = (questionNumber: string): string => {
   );
 };
 
-const buildAnswerFormData = (params: AnswerInterviewQuestionParams) => {
-  const formData = new FormData();
-  formData.append(
-    "questionNumber",
-    normalizeRequiredQuestionNumber(params.questionNumber),
-  );
-  if (params.answerContent) {
-    formData.append("answerContent", params.answerContent);
-  }
-  if (params.audioFile) {
-    formData.append("audioFile", params.audioFile);
-  }
-  if (params.requestId) {
-    formData.append("requestId", params.requestId);
-  }
-  return formData;
-};
-
 const buildResumePreviewPath = (sessionId: string) =>
   `/xunzhi/v1/interview/sessions/${encodeURIComponent(sessionId)}/resume/preview`;
+
+const MAIN_CHAIN_FINISHED_STATUSES = new Set([
+  "FINISHED",
+  "COMPLETED",
+  "CLOSED",
+  "REPORT_READY",
+]);
+
+const toTrimmedStringArray = (value: unknown): string[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value
+    .map((item) => toStringValue(item))
+    .filter((item): item is string => Boolean(item));
+};
+
+const toAnswerQuestionNumber = (turnNo: number | null | undefined) =>
+  turnNo == null ? undefined : String(turnNo);
+
+const isCareerFollowUpTurn = (turn: CareerInterviewTurn | null | undefined) =>
+  (turn?.turnType || "").toUpperCase().includes("FOLLOW");
+
+const isMainChainInterviewFinished = (
+  session: CareerInterviewSession | null | undefined,
+) => {
+  const normalizedStatus = session?.status?.trim().toUpperCase() || "";
+  if (MAIN_CHAIN_FINISHED_STATUSES.has(normalizedStatus)) {
+    return true;
+  }
+  return !session?.currentQuestion?.question?.trim();
+};
+
+const summarizeCareerFeedback = (
+  feedback: Record<string, unknown> | null | undefined,
+) => {
+  if (!feedback) {
+    return undefined;
+  }
+
+  const summary = toStringValue(
+    pickFirst(feedback, ["summary", "feedback", "comment"]),
+  );
+  if (summary) {
+    return summary;
+  }
+
+  const fallbacks = [
+    ...toTrimmedStringArray(feedback.strengths),
+    ...toTrimmedStringArray(feedback.weaknesses),
+    ...toTrimmedStringArray(feedback.missingPoints),
+  ];
+  return fallbacks[0];
+};
+
+const extractCareerMissingPoints = (
+  feedback: Record<string, unknown> | null | undefined,
+) => {
+  if (!feedback) {
+    return undefined;
+  }
+  return toMissingPoints(feedback.missingPoints ?? feedback.gaps);
+};
+
+const mapCareerSessionQuestion = (
+  session: CareerInterviewSession,
+): AnswerInterviewQuestionResult => {
+  const currentQuestion = session.currentQuestion;
+  const finished = isMainChainInterviewFinished(session);
+  return normalizeInterviewAnswer({
+    isSuccess: true,
+    questionNumber: toAnswerQuestionNumber(currentQuestion?.turnNo),
+    questionContent: currentQuestion?.question ?? undefined,
+    nextQuestion: finished ? null : (currentQuestion?.question ?? null),
+    nextQuestionNumber: finished
+      ? null
+      : (toAnswerQuestionNumber(currentQuestion?.turnNo) ?? null),
+    isFollowUp: !finished && isCareerFollowUpTurn(currentQuestion),
+    followUpCount: !finished && isCareerFollowUpTurn(currentQuestion) ? 1 : 0,
+    finished,
+  });
+};
+
+const mapCareerTurnAnswer = (
+  answeredTurn: CareerInterviewTurn,
+  session: CareerInterviewSession,
+): AnswerInterviewQuestionResult => {
+  const finished = isMainChainInterviewFinished(session);
+  const nextQuestion = session.currentQuestion;
+  return normalizeInterviewAnswer({
+    isSuccess: true,
+    questionNumber: toAnswerQuestionNumber(answeredTurn.turnNo),
+    questionContent: answeredTurn.question ?? undefined,
+    score: answeredTurn.score ?? undefined,
+    feedback: summarizeCareerFeedback(answeredTurn.feedback ?? undefined),
+    missingPoints: extractCareerMissingPoints(
+      answeredTurn.feedback ?? undefined,
+    ),
+    nextQuestion: finished ? null : (nextQuestion?.question ?? null),
+    nextQuestionNumber: finished
+      ? null
+      : (toAnswerQuestionNumber(nextQuestion?.turnNo) ?? null),
+    isFollowUp: !finished && isCareerFollowUpTurn(nextQuestion),
+    followUpCount: !finished && isCareerFollowUpTurn(nextQuestion) ? 1 : 0,
+    finished,
+  });
+};
 
 const decodePreviewError = (bytes: Uint8Array) => {
   const previewBytes = bytes.slice(0, Math.min(bytes.length, 2048));
   const text = new TextDecoder("utf-8", { fatal: false }).decode(previewBytes);
   const normalized = text.replace(/\s+/g, " ").trim();
   return normalized.length > 0 ? normalized : undefined;
+};
+
+const blobToBase64 = async (blob: Blob) => {
+  const buffer = await blob.arrayBuffer();
+  let binary = "";
+  const bytes = new Uint8Array(buffer);
+
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+
+  return btoa(binary);
 };
 
 export const interviewService = {
@@ -823,101 +926,60 @@ export const interviewService = {
     const questionNumber = normalizeRequiredQuestionNumber(
       params.questionNumber,
     );
-    const answerRequestPolicy = {
-      dedupe: "reject" as const,
-      debounceMs: 250,
-      key: `interview-answer:${params.sessionId}:${questionNumber}`,
-    };
-    if (!params.audioFile) {
-      const payload: AnswerInterviewQuestionJsonPayload = {
-        questionNumber,
-        answerContent: params.answerContent,
-        requestId: params.requestId,
-      };
-      try {
-        const response = await service.post<
-          AnswerInterviewQuestionResult,
-          AnswerInterviewQuestionJsonPayload
-        >(
-          `/xunzhi/v1/interview/sessions/${encodeURIComponent(params.sessionId)}/interview/answer-json`,
-          payload,
-          {
-            timeout: INTERVIEW_LONG_TIMEOUT_MS,
-            requestPolicy: answerRequestPolicy,
-          },
-        );
-        return normalizeInterviewAnswer(response);
-      } catch (error) {
-        console.warn(
-          "[interviewService] answer-json failed, fallback to multipart /interview/answer",
-          error,
-        );
-      }
+    const turnNo = Number(questionNumber);
+    if (!Number.isFinite(turnNo)) {
+      throw new AppError(
+        ErrorCode.CLIENT_VALIDATION_ERROR,
+        "questionNumber must be numeric on the main interview route",
+      );
     }
 
-    const formData = buildAnswerFormData(params);
-    const response = await service.post<
-      AnswerInterviewQuestionResult,
-      FormData
-    >(
-      `/xunzhi/v1/interview/sessions/${encodeURIComponent(params.sessionId)}/interview/answer`,
-      formData,
-      {
-        timeout: INTERVIEW_LONG_TIMEOUT_MS,
-        requestPolicy: answerRequestPolicy,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      },
-    );
-    return normalizeInterviewAnswer(response);
+    const answeredTurn = await submitCareerInterviewAnswer(params.sessionId, {
+      turnNo,
+      answer: params.answerContent,
+      answerSource: "TEXT",
+      answerSourceMeta: params.requestId
+        ? {
+            requestId: params.requestId,
+          }
+        : undefined,
+    });
+    const refreshedSession = await getCareerInterview(params.sessionId);
+    return mapCareerTurnAnswer(answeredTurn, refreshedSession);
   },
   getNextQuestion: async (sessionId: string) => {
-    const response = await service.get<AnswerInterviewQuestionResult>(
-      `/xunzhi/v1/interview/sessions/${encodeURIComponent(sessionId)}/next-question`,
-    );
-    return normalizeInterviewAnswer(response);
+    const response = await getCareerInterviewNextQuestion(sessionId);
+    return normalizeInterviewAnswer({
+      isSuccess: true,
+      questionNumber: toAnswerQuestionNumber(response.turnNo),
+      questionContent: response.question ?? undefined,
+      nextQuestion: response.question ?? null,
+      nextQuestionNumber: toAnswerQuestionNumber(response.turnNo) ?? null,
+      isFollowUp: isCareerFollowUpTurn(response),
+      followUpCount: isCareerFollowUpTurn(response) ? 1 : 0,
+      finished: !response.question?.trim(),
+    });
   },
   getCurrentQuestion: async (sessionId: string) => {
-    try {
-      const response = await service.get<AnswerInterviewQuestionResult>(
-        `/xunzhi/v1/interview/sessions/${encodeURIComponent(sessionId)}/current-question`,
-      );
-      return normalizeInterviewAnswer(response);
-    } catch (error) {
-      if (shouldFallbackToLegacyPath(error)) {
-        return interviewService.getNextQuestion(sessionId);
-      }
-      throw error;
-    }
+    const response = await getCareerInterview(sessionId);
+    return mapCareerSessionQuestion(response);
   },
   evaluateInterviewDemeanor: async (
     params: EvaluateInterviewDemeanorParams,
   ) => {
-    const formData = new FormData();
-    formData.append(
-      "userPhoto",
-      params.userPhoto,
-      params.fileName || `demeanor-${Date.now()}.jpg`,
-    );
+    const imageBase64 = await blobToBase64(params.userPhoto);
 
-    return service.post<string, FormData>(
-      `/xunzhi/v1/interview/sessions/${encodeURIComponent(params.sessionId)}/demeanor-evaluation`,
-      formData,
+    return service.post<unknown, Record<string, unknown>>(
+      `/career/interviews/${encodeURIComponent(params.sessionId)}/demeanor/analyze`,
       {
-        timeout: INTERVIEW_LONG_TIMEOUT_MS,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+        consentGranted: true,
+        imageBase64,
+        sampledAt: new Date().toISOString(),
       },
     );
   },
-  finishInterviewSession: async (sessionId: string) => {
-    return service.put<void, Record<string, never>>(
-      `/xunzhi/v1/interview/sessions/${encodeURIComponent(sessionId)}/finish`,
-      {},
-    );
-  },
+  finishInterviewSession: async (sessionId: string) =>
+    finishCareerInterview(sessionId),
   saveInterviewRecordFromRedis: async (sessionId: string) => {
     return postWithPathFallback<void>(
       `/xunzhi/v1/interview/interview/record/save-from-redis/${encodeURIComponent(sessionId)}`,

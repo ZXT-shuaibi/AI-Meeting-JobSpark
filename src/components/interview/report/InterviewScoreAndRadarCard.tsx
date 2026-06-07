@@ -29,8 +29,8 @@ export default function InterviewScoreAndRadarCard({
   ];
 
   return (
-    <Card className="p-6 border-slate-100">
-      <div className="grid md:grid-cols-3 gap-4">
+    <Card className="border-slate-100 p-6">
+      <div className="grid gap-4 md:grid-cols-3">
         {scoreCards.map((item, index) => (
           <motion.div
             key={item.label}
@@ -54,10 +54,10 @@ export default function InterviewScoreAndRadarCard({
         ))}
       </div>
       <Separator className="my-6" />
-      <div className="grid md:grid-cols-[0.9fr_1.1fr] gap-6 items-center">
+      <div className="grid items-center gap-6 md:grid-cols-[0.9fr_1.1fr]">
         <div>
           <p className="text-sm font-medium text-slate-900">能力雷达图</p>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="mt-1 text-xs text-slate-500">
             基于本次会话实际数据计算，若后端未返回则显示为空。
           </p>
           <div className="mt-4 space-y-3">

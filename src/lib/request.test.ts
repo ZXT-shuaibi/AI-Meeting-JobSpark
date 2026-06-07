@@ -17,30 +17,84 @@ vi.mock("@/lib/authToken", () => ({
 }));
 
 describe("request utilities", () => {
-  it("requires auth token for protected business endpoints", () => {
-    expect(requiresAuthTokenForRequest("/xunzhi/v1/interview/sessions")).toBe(
-      true,
+  it("buildApiUrl should prefix HireSpark endpoints with /api/ragent exactly", () => {
+    expect(buildApiUrl("/career/interviews")).toBe(
+      "/api/ragent/career/interviews",
     );
+  });
+
+  it("auth/login does not require token", () => {
+    expect(requiresAuthTokenForRequest("/auth/login")).toBe(false);
+  });
+
+  it("career endpoint requires token", () => {
+    expect(requiresAuthTokenForRequest("/career/interviews")).toBe(true);
+  });
+
+  it("requires auth token for absolute HireSpark protected urls", () => {
+    expect(
+      requiresAuthTokenForRequest("https://host/api/ragent/career/interviews"),
+    ).toBe(true);
+  });
+
+  it("requires auth token for absolute legacy protected urls", () => {
+    expect(
+      requiresAuthTokenForRequest(
+        "https://host/xunzhi/v1/interview/sessions/abc/next-question",
+      ),
+    ).toBe(true);
+  });
+
+  it("does not require auth token for legacy public user endpoints", () => {
     expect(requiresAuthTokenForRequest("/xunzhi/v1/users/login")).toBe(false);
+    expect(requiresAuthTokenForRequest("/xunzhi/v1/users/register")).toBe(
+      false,
+    );
+    expect(requiresAuthTokenForRequest("/xunzhi/v1/users/has-username")).toBe(
+      false,
+    );
+    expect(requiresAuthTokenForRequest("/xunzhi/v1/users/check-login")).toBe(
+      false,
+    );
+    expect(requiresAuthTokenForRequest("/xunzhi/v1/users/logout")).toBe(false);
+  });
+
+  it("does not require auth token for absolute legacy public user urls", () => {
+    expect(
+      requiresAuthTokenForRequest(
+        "https://host/api/ragent/xunzhi/v1/users/has-username",
+      ),
+    ).toBe(false);
+  });
+
+  it("requires auth token for legacy protected interview endpoints", () => {
+    expect(
+      requiresAuthTokenForRequest(
+        "/xunzhi/v1/interview/sessions/abc/next-question",
+      ),
+    ).toBe(true);
+  });
+
+  it("requires auth token for protected business endpoints", () => {
+    expect(requiresAuthTokenForRequest("/career/interviews")).toBe(true);
+    expect(requiresAuthTokenForRequest("/auth/login")).toBe(false);
   });
 
   it("throws unauthorized before request when protected endpoint has no token", () => {
     vi.mocked(getAuthToken).mockReturnValue(null);
 
-    expect(() =>
-      assertRequestAuthorized("/xunzhi/v1/interview/sessions"),
-    ).toThrow(AppError);
-    expect(() =>
-      assertRequestAuthorized("/xunzhi/v1/interview/sessions"),
-    ).toThrow("Unauthorized");
+    expect(() => assertRequestAuthorized("/career/interviews")).toThrow(
+      AppError,
+    );
+    expect(() => assertRequestAuthorized("/career/interviews")).toThrow(
+      "Unauthorized",
+    );
   });
 
   it("allows protected endpoint when token exists", () => {
     vi.mocked(getAuthToken).mockReturnValue("token-value");
 
-    expect(assertRequestAuthorized("/xunzhi/v1/interview/sessions")).toBe(
-      "token-value",
-    );
+    expect(assertRequestAuthorized("/career/interviews")).toBe("token-value");
   });
 
   it("buildApiUrl should append query params and skip empty values", () => {
@@ -52,7 +106,7 @@ describe("request utilities", () => {
       e: null,
     });
 
-    expect(url).toContain("/api/hello");
+    expect(url).toContain("/api/ragent/hello");
     expect(url).toContain("a=1");
     expect(url).toContain("b=true");
     expect(url).not.toContain("c=");
@@ -147,7 +201,7 @@ describe("request utilities", () => {
   it("buildRequestPolicyKey should be stable for same semantic payload", () => {
     const keyA = buildRequestPolicyKey({
       method: "post",
-      url: "/xunzhi/v1/interview/sessions",
+      url: "/career/interviews",
       params: {
         page: 1,
         size: 20,
@@ -159,7 +213,7 @@ describe("request utilities", () => {
     });
     const keyB = buildRequestPolicyKey({
       method: "POST",
-      url: "/xunzhi/v1/interview/sessions",
+      url: "/career/interviews",
       params: {
         size: 20,
         page: 1,

@@ -1,8 +1,8 @@
 import { useCallback, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { ROUTES } from "@/lib/constants";
-import { buildReportSearch } from "@/lib/interviewReportRoute";
+import { buildInterviewRoomPath, ROUTES } from "@/lib/constants";
+import { buildInterviewReportDetailPath } from "@/lib/interviewReportRoute";
 import { CHAT_MESSAGE_VARIANT } from "@/lib/chat";
 import {
   buildInterviewProgressPatch,
@@ -59,15 +59,9 @@ export function useInterviewSessionFlow(user: InterviewFlowUser) {
     stopThinkingIndicator,
     cancelActiveQuestionStream,
     resetMessageStream,
-  } = useInterviewMessageStream();
+  } = useInterviewMessageStream(interviewerSessionId);
 
   const isReady = Boolean(interviewerSessionId) && !isInterviewFinished;
-
-  const buildInterviewRoomPath = useCallback(
-    (sessionId: string) =>
-      `${ROUTES.interviewRoom}/${encodeURIComponent(sessionId)}`,
-    [],
-  );
 
   const invalidateInterviewRecords = useCallback(
     () =>
@@ -84,9 +78,9 @@ export function useInterviewSessionFlow(user: InterviewFlowUser) {
         navigate(buildInterviewRoomPath(nextValue), { replace: true });
         return;
       }
-      navigate(ROUTES.interviewRoom, { replace: true });
+      navigate(ROUTES.career, { replace: true });
     },
-    [buildInterviewRoomPath, navigate, persistInterviewerSessionId],
+    [navigate, persistInterviewerSessionId],
   );
 
   const clearInterviewError = useCallback(() => {
@@ -281,7 +275,9 @@ export function useInterviewSessionFlow(user: InterviewFlowUser) {
       resetProgressState();
       resetAutoSaveAttempt();
       navigate(
-        `${ROUTES.interviewReport}${buildReportSearch(reportSessionId)}`,
+        reportSessionId
+          ? buildInterviewReportDetailPath(reportSessionId)
+          : ROUTES.interviewReport,
         {
           state: reportSessionId ? { sessionId: reportSessionId } : undefined,
         },

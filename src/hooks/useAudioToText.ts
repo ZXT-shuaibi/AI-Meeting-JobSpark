@@ -10,6 +10,10 @@ type AudioToTextComposerBridgeOptions = {
   onChange: (value: string) => void;
 };
 
+type UseAudioToTextOptions = {
+  interviewSessionId?: string | null;
+};
+
 export function useAudioToTextComposerBridge({
   enabled,
   isRecording,
@@ -45,8 +49,11 @@ export function useAudioToTextComposerBridge({
   }, [enabled, isRecording, transcription, value, onChange]);
 }
 
-export function useAudioToText() {
+export function useAudioToText(options: UseAudioToTextOptions = {}) {
   const { currentUser } = useAppSelector((state) => state.user);
 
-  return useAudioTranscriptionController(currentUser);
+  return useAudioTranscriptionController(
+    currentUser,
+    options.interviewSessionId,
+  );
 }

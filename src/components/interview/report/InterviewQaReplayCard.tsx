@@ -4,13 +4,14 @@ import { Link, useLocation } from "react-router-dom";
 import { ChevronDown, ChevronUp, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import type { QaReview } from "@/components/interview/report/types";
 import { ROUTES } from "@/lib/constants";
 import {
+  buildInterviewReportDetailPath,
   buildReportSearch,
   getReportSessionIdFromLocation,
 } from "@/lib/interviewReportRoute";
 import { cn } from "@/lib/utils";
-import type { QaReview } from "@/components/interview/report/types";
 
 type InterviewQaReplayCardProps = {
   qaReviews: QaReview[];
@@ -47,7 +48,9 @@ export default function InterviewQaReplayCard({
   const isDetail = variant === "detail";
   const location = useLocation();
   const reportSessionId = getReportSessionIdFromLocation(location);
-  const detailLink = `${ROUTES.interviewReportDetail}${buildReportSearch(reportSessionId)}`;
+  const detailLink = reportSessionId
+    ? buildInterviewReportDetailPath(reportSessionId)
+    : `${ROUTES.interviewReportDetail}${buildReportSearch(reportSessionId)}`;
   const [expandedFeedbackMap, setExpandedFeedbackMap] = useState<
     Record<string, boolean>
   >({});
@@ -154,7 +157,7 @@ export default function InterviewQaReplayCard({
         }}
       >
         <div className="flex items-center justify-between gap-4">
-          <div className="space-y-1 min-w-0">
+          <div className="min-w-0 space-y-1">
             <div
               className={cn(
                 "flex items-center gap-2",

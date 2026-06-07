@@ -10,7 +10,9 @@ import {
 export type SmartComposerProps = Omit<
   SmartComposerViewProps,
   "isRecording" | "onMicClick"
->;
+> & {
+  transcriptionSessionId?: string | null;
+};
 
 export default function SmartComposer({
   value,
@@ -20,12 +22,15 @@ export default function SmartComposer({
   disabled = false,
   showDefaultLeading = true,
   showVoiceButton = true,
+  transcriptionSessionId = null,
   leading,
   actions,
   className,
 }: SmartComposerProps) {
   const { isRecording, transcription, error, startRecording, stopRecording } =
-    useAudioToText();
+    useAudioToText({
+      interviewSessionId: transcriptionSessionId,
+    });
 
   useAudioToTextComposerBridge({
     enabled: showVoiceButton,

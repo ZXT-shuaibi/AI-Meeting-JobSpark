@@ -62,10 +62,16 @@ export interface HttpClient {
 export const getApiBaseUrl = () => resolveAppEnv().apiBaseUrl;
 
 const AUTH_FREE_API_PATHS = new Set([
+  "/auth/login",
+  "/auth/logout",
   "/xunzhi/v1/users/login",
   "/xunzhi/v1/users/register",
+  "/xunzhi/v1/users/has-username",
   "/xunzhi/v1/users/check-login",
+  "/xunzhi/v1/users/logout",
 ]);
+
+const LEGACY_PROTECTED_API_PREFIX = "/xunzhi/v1/";
 
 const trimQueryAndHash = (path: string) => {
   const queryIndex = path.indexOf("?");
@@ -77,6 +83,36 @@ const trimQueryAndHash = (path: string) => {
   return path.slice(0, Math.min(...stopIndexes));
 };
 
+const stripApiBasePrefix = (path: string) => {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  const baseUrl = trimQueryAndHash(getApiBaseUrl());
+  const normalizedBasePath = (() => {
+    if (!baseUrl) {
+      return "";
+    }
+
+    if (baseUrl.startsWith("http://") || baseUrl.startsWith("https://")) {
+      try {
+        return trimQueryAndHash(new URL(baseUrl).pathname || "");
+      } catch {
+        return "";
+      }
+    }
+
+    return baseUrl.startsWith("/") ? baseUrl : `/${baseUrl}`;
+  })();
+
+  if (
+    normalizedBasePath &&
+    (normalizedPath === normalizedBasePath ||
+      normalizedPath.startsWith(`${normalizedBasePath}/`))
+  ) {
+    return normalizedPath.slice(normalizedBasePath.length) || "/";
+  }
+
+  return normalizedPath;
+};
+
 const normalizeRequestPath = (url?: string) => {
   if (!url) {
     return "";
@@ -85,27 +121,29 @@ const normalizeRequestPath = (url?: string) => {
   if (url.startsWith("http://") || url.startsWith("https://")) {
     try {
       const parsed = new URL(url);
-      return trimQueryAndHash(parsed.pathname || "");
+      return stripApiBasePrefix(trimQueryAndHash(parsed.pathname || ""));
     } catch {
       return "";
     }
   }
 
-  const baseUrl = getApiBaseUrl();
-  const normalizedRelative = url.startsWith("/") ? url : `/${url}`;
-  if (normalizedRelative.startsWith(baseUrl)) {
-    return trimQueryAndHash(normalizedRelative.slice(baseUrl.length));
-  }
-
-  return trimQueryAndHash(normalizedRelative);
+  return stripApiBasePrefix(trimQueryAndHash(url));
 };
 
 export const requiresAuthTokenForRequest = (url?: string) => {
   const path = normalizeRequestPath(url);
-  if (!path.startsWith("/xunzhi/v1/")) {
+  if (AUTH_FREE_API_PATHS.has(path)) {
     return false;
   }
-  return !AUTH_FREE_API_PATHS.has(path);
+  if (path.startsWith(LEGACY_PROTECTED_API_PREFIX)) {
+    return true;
+  }
+  return (
+    path.startsWith("/career/") ||
+    path.startsWith("/admin/") ||
+    path.startsWith("/rag/") ||
+    path.startsWith("/user/")
+  );
 };
 
 export const assertRequestAuthorized = (url: string | undefined) => {

@@ -1,22 +1,39 @@
 import { describe, expect, it } from "vitest";
 import {
   resolveApiBaseUrl,
+  resolveApiTarget,
   resolveAppEnv,
   resolveRuntimeWsBaseUrl,
   resolveStaticPreviewEnabled,
   resolveWsBaseUrl,
 } from "@/config/env";
 
-describe("env utilities", () => {
-  it("resolveApiBaseUrl should use default and trim trailing slash", () => {
-    expect(resolveApiBaseUrl(undefined)).toBe("/api");
-    expect(resolveApiBaseUrl("/api/")).toBe("/api");
+describe("HireSpark env config", () => {
+  it("默认把 API base 解析为 /api/ragent", () => {
+    expect(resolveApiBaseUrl(undefined)).toBe("/api/ragent");
+  });
+
+  it("默认把 API target 解析为 http://localhost:9090", () => {
+    expect(resolveApiTarget(undefined)).toBe("http://localhost:9090");
+  });
+
+  it("未显式配置 ws base 时按当前协议推导", () => {
+    expect(
+      resolveRuntimeWsBaseUrl(
+        { protocol: "https:", host: "example.com" },
+        resolveWsBaseUrl(undefined),
+      ),
+    ).toBe("wss://example.com");
+  });
+
+  it("resolveApiBaseUrl should trim trailing slash", () => {
+    expect(resolveApiBaseUrl("/api/ragent/")).toBe("/api/ragent");
   });
 
   it("resolveAppEnv should fallback to defaults", () => {
     const env = resolveAppEnv({});
-    expect(env.apiBaseUrl).toBe("/api");
-    expect(env.apiTarget).toBe("http://localhost:8002");
+    expect(env.apiBaseUrl).toBe("/api/ragent");
+    expect(env.apiTarget).toBe("http://localhost:9090");
     expect(env.wsBaseUrl).toBeNull();
     expect(env.staticPreviewEnabled).toBe(false);
   });

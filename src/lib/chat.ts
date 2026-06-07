@@ -25,6 +25,9 @@ export type ChatMessageTts = {
   text?: string;
   autoPlay?: boolean;
   cacheKey?: string;
+  provider?: "legacy" | "career-interview";
+  sessionId?: string | null;
+  turnId?: string | null;
 };
 
 export type ChatMessage = {

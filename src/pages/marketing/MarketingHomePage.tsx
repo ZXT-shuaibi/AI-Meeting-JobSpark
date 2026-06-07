@@ -35,14 +35,14 @@ export default function MarketingHomePage() {
 
   const handleStartNow = useCallback(() => {
     if (isAuthenticated) {
-      navigate(ROUTES.interviewIntro);
+      navigate(ROUTES.career);
       return;
     }
 
     navigate(ROUTES.auth, {
       state: {
         from: {
-          pathname: ROUTES.interviewIntro,
+          pathname: ROUTES.career,
         },
       },
     });

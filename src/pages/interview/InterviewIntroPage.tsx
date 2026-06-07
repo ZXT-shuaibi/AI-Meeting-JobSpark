@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Sparkles } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
+import { isStaticPreviewEnabled } from "@/config/env";
 import { ROUTES } from "@/lib/constants";
 import InterviewIntroHighlights from "@/components/interview/intro/InterviewIntroHighlights";
 import InterviewIntroStepsCard from "@/components/interview/intro/InterviewIntroStepsCard";
@@ -9,56 +11,13 @@ import {
   DEFAULT_INTERVIEW_INTRO_LOCALE,
   getInterviewIntroCopy,
 } from "@/components/interview/intro/introCopy";
-import {
-  interviewService,
-  type InterviewConversationItem,
-} from "@/services/interviewService";
-
-const ACTIVE_INTERVIEW_STATUSES = new Set([
-  "DRAFT",
-  "RESUME_UPLOADING",
-  "READY",
-  "IN_PROGRESS",
-]);
 
 export default function InterviewIntroPage() {
-  const [latestActiveSession, setLatestActiveSession] =
-    useState<InterviewConversationItem | null>(null);
   const introCopy = useMemo(
     () => getInterviewIntroCopy(DEFAULT_INTERVIEW_INTRO_LOCALE),
     [],
   );
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const loadLatestActiveSession = async () => {
-      try {
-        const response = await interviewService.pageInterviewConversations({
-          current: 1,
-          size: 10,
-        });
-        if (cancelled) {
-          return;
-        }
-        const activeSession =
-          response.records.find((item) =>
-            item.status ? ACTIVE_INTERVIEW_STATUSES.has(item.status) : false,
-          ) ?? null;
-        setLatestActiveSession(activeSession);
-      } catch (error) {
-        if (!cancelled) {
-          console.error("Failed to load latest interview session:", error);
-        }
-      }
-    };
-
-    void loadLatestActiveSession();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const showSampleReportEntry = isStaticPreviewEnabled();
 
   return (
     <div className="h-full overflow-y-auto bg-white">
@@ -79,29 +38,19 @@ export default function InterviewIntroPage() {
             <InterviewIntroHighlights highlights={introCopy.highlights} />
 
             <div className="flex flex-wrap gap-3">
-              {latestActiveSession ? (
-                <Button asChild className="rounded-full">
-                  <Link
-                    to={`${ROUTES.interviewRoom}/${encodeURIComponent(latestActiveSession.sessionId)}`}
-                  >
-                    {introCopy.continueButton}
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              ) : null}
-              <Button
-                asChild
-                className="rounded-full"
-                variant={latestActiveSession ? "outline" : "default"}
-              >
-                <Link to={ROUTES.interviewRoom}>
+              <Button asChild className="rounded-full">
+                <Link to={ROUTES.career}>
                   {introCopy.startButton}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
-              <Button asChild variant="outline" className="rounded-full">
-                <Link to={ROUTES.interviewReport}>{introCopy.reportButton}</Link>
-              </Button>
+              {showSampleReportEntry ? (
+                <Button asChild variant="outline" className="rounded-full">
+                  <Link to={ROUTES.interviewReport}>
+                    {introCopy.reportButton}
+                  </Link>
+                </Button>
+              ) : null}
             </div>
           </div>
 

@@ -1,8 +1,14 @@
 export type AudioToTextIncomingMessage = {
   type?: string | null;
   message?: string | null;
+  text?: string | null;
   data?: string | null;
+  fullText?: string | null;
+  displayText?: string | null;
+  committedText?: string | null;
+  liveText?: string | null;
   isSnapshot?: boolean | null;
+  isFinalPacket?: boolean | null;
   updateAction?: string | null;
   timestamp?: number | null;
 };

@@ -1,4 +1,5 @@
 import { startTransition, useCallback, useRef, useState } from "react";
+
 import type { CameraPreviewHandle } from "@/components/camera/CameraPreview";
 import ChatRoom from "@/components/chat/ChatRoom";
 import SmartComposer from "@/components/chat/SmartComposer";
@@ -17,6 +18,8 @@ export default function InterviewPage() {
   const { chat, interview, resume, camera } = useInterviewPageController();
   const { setInput, isReady, isSubmitting, handleSend, input, messages } = chat;
   const { setIsPreviewOpen } = resume;
+  const showWorkspaceGuide =
+    !interview.sessionId && !resume.isUploading && !resume.localFile;
 
   const captureFrame = useCallback(async () => {
     return cameraPreviewRef.current?.captureFrame() ?? null;
@@ -24,7 +27,9 @@ export default function InterviewPage() {
 
   const handleInsertNotes = useCallback(
     (notes: string) => {
-      if (!notes.trim()) return;
+      if (!notes.trim()) {
+        return;
+      }
       setInput((prev) => (prev.trim() ? `${prev.trim()}\n\n${notes}` : notes));
       setIsSketchpadOpen(false);
     },
@@ -78,6 +83,7 @@ export default function InterviewPage() {
               fileInputRef={resume.fileInputRef}
               isResumeUploading={resume.isUploading}
               showUploadButton={!isReady}
+              showWorkspaceGuide={showWorkspaceGuide}
               resumeUploadStage={resume.uploadStage}
               resumeLocalFile={resume.localFile}
               resumeFileUrl={resume.fileUrl}
@@ -112,6 +118,7 @@ export default function InterviewPage() {
             value={input}
             onChange={setInput}
             onSend={handleSend}
+            transcriptionSessionId={interview.sessionId}
             placeholder="输入你的回答，或点击麦克风开始语音作答..."
             disabled={!isReady || isSubmitting || resume.isUploading}
             showDefaultLeading={false}

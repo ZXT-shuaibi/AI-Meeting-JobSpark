@@ -15,8 +15,8 @@ export type ResolvedAppEnv = {
   staticPreviewEnabled: boolean;
 };
 
-const DEFAULT_API_BASE_URL = "/api";
-const DEFAULT_API_TARGET = "http://localhost:8002";
+const DEFAULT_API_BASE_URL = "/api/ragent";
+const DEFAULT_API_TARGET = "http://localhost:9090";
 
 const trimValue = (value?: string | null) => value?.trim() ?? "";
 
@@ -71,7 +71,9 @@ export const resolveAppEnv = (source: AppEnvSource = getMetaEnvSource()) => {
     apiBaseUrl: resolveApiBaseUrl(source.VITE_API_BASE_URL),
     apiTarget: resolveApiTarget(source.VITE_API_TARGET),
     wsBaseUrl: resolveWsBaseUrl(source.VITE_WS_BASE_URL),
-    staticPreviewEnabled: resolveStaticPreviewEnabled(source.VITE_STATIC_PREVIEW),
+    staticPreviewEnabled: resolveStaticPreviewEnabled(
+      source.VITE_STATIC_PREVIEW,
+    ),
   } satisfies ResolvedAppEnv;
 };
 

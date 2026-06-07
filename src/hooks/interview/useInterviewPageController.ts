@@ -9,10 +9,6 @@ export function useInterviewPageController() {
   const sessionFlow = useInterviewSessionFlow(currentUser);
   const resumeAnalysis = useInterviewResumeAnalysis({
     interviewerSessionId: sessionFlow.interviewerSessionId,
-    setInterviewerSessionId: sessionFlow.setInterviewerSessionId,
-    syncNextQuestion: (sessionId) => sessionFlow.syncNextQuestion(sessionId),
-    resetInterviewFlow: sessionFlow.resetInterviewFlow,
-    clearInterviewError: sessionFlow.clearInterviewError,
   });
   const cameraState = useInterviewCameraState();
 

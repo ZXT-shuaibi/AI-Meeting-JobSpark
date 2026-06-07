@@ -27,9 +27,8 @@ function InterviewSketchpadSheetContent({
     currentQuestionNumber,
     currentQuestionContent,
   });
-  const { draft, updateDraft, persistDraft } = useInterviewSketchpadStorage(
-    sessionId,
-  );
+  const { draft, updateDraft, persistDraft } =
+    useInterviewSketchpadStorage(sessionId);
   const notes = draft.notes;
   const storedTranscriptionBuffer = draft.transcriptionBuffer;
 
@@ -49,6 +48,7 @@ function InterviewSketchpadSheetContent({
   };
 
   const transcription = useInterviewSketchpadTranscription({
+    interviewSessionId: sessionId,
     notes,
     transcriptionBuffer: storedTranscriptionBuffer,
     setNotes,
