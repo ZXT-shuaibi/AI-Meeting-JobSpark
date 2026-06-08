@@ -19,15 +19,14 @@ export default function ChatPage() {
       inputValue={composer.input}
       onInputChange={composer.setInput}
       onSend={composer.handleSend}
-      contentOverlay={
-        history.isLoading ? <ChatHistoryLoadingOverlay /> : null
-      }
+      contentOverlay={history.isLoading ? <ChatHistoryLoadingOverlay /> : null}
       customComposer={
         <SmartComposer
           value={composer.input}
           onChange={composer.setInput}
           onSend={composer.handleSend}
           disabled={composer.isBlocked}
+          showVoiceButton={false}
           actions={
             modelSelection.models.length > 0 &&
             modelSelection.selectedModel && (

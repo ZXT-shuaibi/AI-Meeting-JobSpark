@@ -71,7 +71,7 @@ export default function MarketingHomePage() {
           <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-6 md:px-8">
             <div className="flex items-center gap-3">
               <img
-                src="/xunzhi-mark.svg"
+                src="/jobspark-mark.svg"
                 alt={APP_BRAND_NAME}
                 className="h-8 w-8 rounded-full border border-white/25 object-cover"
               />

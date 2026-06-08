@@ -37,40 +37,13 @@ describe("request utilities", () => {
     ).toBe(true);
   });
 
-  it("requires auth token for absolute legacy protected urls", () => {
+  it("requires auth token for HireSpark conversation endpoints", () => {
     expect(
-      requiresAuthTokenForRequest(
-        "https://host/xunzhi/v1/interview/sessions/abc/next-question",
-      ),
+      requiresAuthTokenForRequest("/conversations/conversation-1/messages"),
     ).toBe(true);
-  });
-
-  it("does not require auth token for legacy public user endpoints", () => {
-    expect(requiresAuthTokenForRequest("/xunzhi/v1/users/login")).toBe(false);
-    expect(requiresAuthTokenForRequest("/xunzhi/v1/users/register")).toBe(
-      false,
-    );
-    expect(requiresAuthTokenForRequest("/xunzhi/v1/users/has-username")).toBe(
-      false,
-    );
-    expect(requiresAuthTokenForRequest("/xunzhi/v1/users/check-login")).toBe(
-      false,
-    );
-    expect(requiresAuthTokenForRequest("/xunzhi/v1/users/logout")).toBe(false);
-  });
-
-  it("does not require auth token for absolute legacy public user urls", () => {
     expect(
       requiresAuthTokenForRequest(
-        "https://host/api/ragent/xunzhi/v1/users/has-username",
-      ),
-    ).toBe(false);
-  });
-
-  it("requires auth token for legacy protected interview endpoints", () => {
-    expect(
-      requiresAuthTokenForRequest(
-        "/xunzhi/v1/interview/sessions/abc/next-question",
+        "https://host/api/ragent/conversations/conversation-1/messages",
       ),
     ).toBe(true);
   });

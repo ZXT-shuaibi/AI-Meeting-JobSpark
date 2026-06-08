@@ -11,7 +11,7 @@ export default function ChatPageHeader({
     <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white/50 px-6 py-4 backdrop-blur-sm">
       <div className="flex items-center gap-2">
         <img
-          src="/xunzhi-mark.svg"
+          src="/jobspark-mark.svg"
           alt={APP_BRAND_NAME}
           className="h-8 w-8 rounded-full border border-slate-200 object-cover"
         />

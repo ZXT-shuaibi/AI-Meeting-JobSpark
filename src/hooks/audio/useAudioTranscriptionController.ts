@@ -111,6 +111,11 @@ export function useAudioTranscriptionController(
       return;
     }
 
+    if (!interviewSessionId?.trim()) {
+      setError("Voice transcription is only available during interviews");
+      return;
+    }
+
     if (isRecording) {
       return;
     }
@@ -133,7 +138,14 @@ export function useAudioTranscriptionController(
       setError(START_RECORDING_ERROR);
       await cleanup();
     }
-  }, [cleanup, connectTransport, currentUser, isRecording, startStream]);
+  }, [
+    cleanup,
+    connectTransport,
+    currentUser,
+    interviewSessionId,
+    isRecording,
+    startStream,
+  ]);
 
   const stopRecording = useCallback(() => {
     void cleanup();

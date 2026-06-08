@@ -26,6 +26,7 @@ export default function HomeComposerPanel({
         value={query}
         onChange={onQueryChange}
         onSend={onSend}
+        showVoiceButton={false}
         actions={
           models.length > 0 &&
           selectedModel && (

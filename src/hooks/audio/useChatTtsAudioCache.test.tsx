@@ -2,6 +2,7 @@ import { renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useChatTtsAudioCache } from "@/hooks/audio/useChatTtsAudioCache";
 import type { ChatMessage } from "@/lib/chat";
+import type { CareerInterviewTtsPlan } from "@/services/careerService";
 
 const createObjectUrlMock = vi.fn(() => "blob:tts-audio");
 const revokeObjectUrlMock = vi.fn();
@@ -19,6 +20,28 @@ const createMessage = (
     text: `tts-${id}`,
     cacheKey: `cache-${id}`,
   },
+  ...overrides,
+});
+
+const createTtsPlan = (
+  overrides: Partial<CareerInterviewTtsPlan> = {},
+): CareerInterviewTtsPlan => ({
+  enabled: true,
+  status: "completed",
+  chunks: [],
+  cacheKey: null,
+  cancelKey: null,
+  fallbackText: null,
+  degradeReason: null,
+  voice: null,
+  cacheTtlSeconds: null,
+  taskId: null,
+  taskStatus: null,
+  audioBase64: null,
+  audioUrl: null,
+  pybufContent: null,
+  completed: true,
+  success: true,
   ...overrides,
 });
 
@@ -68,12 +91,10 @@ describe("useChatTtsAudioCache", () => {
     const { result } = renderHook(() => useChatTtsAudioCache());
 
     const objectUrl = await result.current.resolvePlayableAudioUrl(
-      {
-        completed: true,
-        success: true,
+      createTtsPlan({
         audioBase64: "QQ==",
         audioUrl: null,
-      },
+      }),
       new AbortController().signal,
     );
 
@@ -93,12 +114,10 @@ describe("useChatTtsAudioCache", () => {
     const { result } = renderHook(() => useChatTtsAudioCache());
 
     const objectUrl = await result.current.resolvePlayableAudioUrl(
-      {
-        completed: true,
-        success: true,
+      createTtsPlan({
         audioBase64: null,
         audioUrl: "https://example.com/audio.mp3",
-      },
+      }),
       new AbortController().signal,
     );
 

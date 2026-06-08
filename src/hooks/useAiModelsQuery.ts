@@ -36,7 +36,7 @@ export function useAiModelsQuery(options: UseAiModelsQueryOptions = {}) {
   const query = useQuery({
     queryKey: getAiModelsQueryKey(userKey, authEpoch),
     queryFn: async () => {
-      const response = await aiService.getAiProperties({ isEnabled: 1 });
+      const response = await aiService.getAiProperties();
       return response?.records ?? [];
     },
     enabled,

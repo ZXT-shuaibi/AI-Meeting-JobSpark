@@ -383,7 +383,7 @@ function ResumeOptimizeWorkspace({
               简历定向优化
             </h1>
             <p className="text-base leading-7 text-slate-500">
-              先确认简历内容，再补充目标 JD，让优化建议直接围绕这一次投递展开。
+              先确认简历内容，再补充目标 JD，让优化建议直接围绕这一轮投递展开。
             </p>
           </div>
 

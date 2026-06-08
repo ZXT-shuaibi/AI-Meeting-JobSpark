@@ -69,11 +69,28 @@ describe("useAudioTranscriptionController", () => {
     expect(transportState.params?.interviewSessionId).toBe("session-career-1");
   });
 
+  it("rejects generic chat transcription when no interview session id is provided", async () => {
+    const { result } = renderHook(() =>
+      useAudioTranscriptionController(currentUser),
+    );
+
+    await act(async () => {
+      await result.current.startRecording();
+    });
+
+    expect(result.current.isRecording).toBe(false);
+    expect(result.current.error).toBe(
+      "Voice transcription is only available during interviews",
+    );
+    expect(transportState.connect).not.toHaveBeenCalled();
+    expect(streamState.start).not.toHaveBeenCalled();
+  });
+
   it("cleans up transport and microphone when startRecording fails", async () => {
     streamState.start.mockRejectedValueOnce(new Error("mic denied"));
 
     const { result, unmount } = renderHook(() =>
-      useAudioTranscriptionController(currentUser),
+      useAudioTranscriptionController(currentUser, "session-career-1"),
     );
 
     await act(async () => {
@@ -95,7 +112,7 @@ describe("useAudioTranscriptionController", () => {
 
   it("stops the runtime and exposes the error when the transport fails", async () => {
     const { result, unmount } = renderHook(() =>
-      useAudioTranscriptionController(currentUser),
+      useAudioTranscriptionController(currentUser, "session-career-1"),
     );
 
     await act(async () => {
@@ -120,7 +137,7 @@ describe("useAudioTranscriptionController", () => {
 
   it("does not clean up an active session during the rerender caused by startRecording", async () => {
     const { result, unmount } = renderHook(() =>
-      useAudioTranscriptionController(currentUser),
+      useAudioTranscriptionController(currentUser, "session-career-1"),
     );
 
     await act(async () => {
@@ -139,7 +156,7 @@ describe("useAudioTranscriptionController", () => {
 
   it("keeps stopRecording idempotent", async () => {
     const { result, unmount } = renderHook(() =>
-      useAudioTranscriptionController(currentUser),
+      useAudioTranscriptionController(currentUser, "session-career-1"),
     );
 
     await act(async () => {
@@ -159,7 +176,7 @@ describe("useAudioTranscriptionController", () => {
 
   it("merges partial and final transcription events through the reducer", async () => {
     const { result, unmount } = renderHook(() =>
-      useAudioTranscriptionController(currentUser),
+      useAudioTranscriptionController(currentUser, "session-career-1"),
     );
 
     act(() => {

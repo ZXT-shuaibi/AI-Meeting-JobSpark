@@ -1,16 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockSynthesize, mockPlanCareerInterviewTextToSpeech } = vi.hoisted(
-  () => ({
-    mockSynthesize: vi.fn(),
-    mockPlanCareerInterviewTextToSpeech: vi.fn(),
-  }),
-);
-
-vi.mock("@/services/xunfeiTtsService", () => ({
-  xunfeiTtsService: {
-    synthesize: mockSynthesize,
-  },
+const { mockPlanCareerInterviewTextToSpeech } = vi.hoisted(() => ({
+  mockPlanCareerInterviewTextToSpeech: vi.fn(),
 }));
 
 vi.mock("@/services/careerService", () => ({
@@ -68,26 +59,18 @@ describe("chatTtsPlayback.shared", () => {
       },
     );
     expect(result.audioBase64).toBe("QQ==");
-    expect(mockSynthesize).not.toHaveBeenCalled();
   });
 
-  it("keeps legacy TTS for non-career chat playback", async () => {
-    mockSynthesize.mockResolvedValue({
-      completed: true,
-      success: true,
-      audioBase64: "QQ==",
-      audioUrl: null,
-    });
+  it("rejects non-interview chat playback because HireSpark does not expose a generic chat TTS endpoint", async () => {
+    await expect(
+      synthesizeChatMessageTts(
+        {
+          text: "Legacy playback",
+        },
+        new AbortController().signal,
+      ),
+    ).rejects.toThrow("Chat TTS is only available during interviews");
 
-    const result = await synthesizeChatMessageTts(
-      {
-        text: "Legacy playback",
-      },
-      new AbortController().signal,
-    );
-
-    expect(mockSynthesize).toHaveBeenCalledOnce();
     expect(mockPlanCareerInterviewTextToSpeech).not.toHaveBeenCalled();
-    expect(result.audioBase64).toBe("QQ==");
   });
 });

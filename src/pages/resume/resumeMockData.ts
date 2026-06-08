@@ -40,7 +40,7 @@ export const resumeCards: ResumeCardItem[] = [
   {
     id: "resume-01",
     name: "张潇童",
-    title: "AI 产品与前端协同简历",
+    title: "AI 产品与前端协同版简历",
     summary:
       "突出 AI 面试、简历优化与前端交付之间的完整链路，适合投递 AI 产品协同与前端体验方向岗位。",
     updatedAt: "2026-06-02 10:30",
@@ -50,7 +50,7 @@ export const resumeCards: ResumeCardItem[] = [
   {
     id: "resume-02",
     name: "张潇童",
-    title: "智能面试产品简历",
+    title: "智能面试产品版简历",
     summary:
       "强调语音交互、面试训练与复盘报告能力，更适合智能面试、教育科技和 AI 训练平台岗位。",
     updatedAt: "2026-05-28 18:10",
@@ -62,7 +62,7 @@ export const resumeCards: ResumeCardItem[] = [
 export const excellentResumeCards: ResumeCardItem[] = [
   {
     id: "template-01",
-    name: "结果导向型简历模板",
+    name: "结果导向型产品简历模板",
     title: "产品经理 / 策略分析",
     summary:
       "适合强化项目结果、指标提升与业务理解，便于快速对齐校招与实习岗位。",
@@ -99,11 +99,11 @@ export const resumeDetails: ResumeDetailRecord[] = [
         period: "2025.11 - 至今",
         highlights: [
           "负责智能面试、简历优化、成长复盘三条链路的页面重组与交互梳理。",
-          "以 AI-Meeting 的界面骨架为基础，将多工具页面收束为更清晰的产品工作台。",
+          "以 AI-Meeting 的壳层为基座，将多工具页面收束为更清晰的产品工作台。",
         ],
       },
       {
-        company: "教育 AI 应用项目",
+        company: "教育与 AI 应用项目",
         role: "产品 / 交互设计",
         period: "2024.06 - 2025.10",
         highlights: [
@@ -137,7 +137,7 @@ export const resumeDetails: ResumeDetailRecord[] = [
     title: "智能面试产品版",
     contactLine: "zhangxt@example.com | 138-0000-0000 | 杭州",
     summary:
-      "聚焦智能面试、语音交互与报告复盘路径，擅长把训练场景拆解成可执行流程与反馈系统。",
+      "聚焦智能面试、语音交互与报告复盘路径，擅长把训练场景拆解成可执行的流程与反馈系统。",
     skills: ["LLM", "语音交互", "Node.js", "产品设计"],
     targetRole: "智能面试产品",
     rawText:
@@ -181,7 +181,7 @@ export const optimizeWorkspaceDraft = {
     "AI 产品与前端协同方向候选人，负责 AI 面试与简历联动平台的交互重组与页面交付。主导梳理简历上传、JD 对齐、优化反馈与训练复盘的完整链路，将原有拼接式界面改造为更清晰的工作台结构。擅长把抽象的 AI 能力转化为可理解、可操作、可复盘的真实体验。",
   jdLink: "https://jobs.example.com/ai-product-frontend",
   jdText:
-    "目标岗位需要候选人理解 AI 产品闭环，能够独立完成 React / TypeScript 前端交付，并把 LLM 能力转化为清晰的用户流程、可解释的反馈结构与稳定的页面体验。需要具备跨产品、设计、研发协同能力，能够围绕业务目标优化用户路径与信息表达。",
+    "目标岗位需要候选人理解 AI 产品闭环，能够独立完成 React / TypeScript 前端交付，并将 LLM 能力转化为清晰的用户流程、可解释的反馈结果与稳定的页面体验。需要具备跨产品、设计、研发协同能力，能够围绕业务目标优化用户路径与信息表达。",
   focusTags: ["结果表达", "AI 产品闭环", "JD 关键词对齐"],
   quickChecklist: ["上传原始简历", "补充目标 JD", "确认优化方向"],
 };
@@ -189,7 +189,7 @@ export const optimizeWorkspaceDraft = {
 export const optimizationOverview = {
   score: 84,
   matchSummary:
-    "当前版本已经覆盖岗位所需的前端交付与 AI 产品协同能力，但结果表达和 JD 关键词映射仍有继续压缩与强化空间。",
+    "当前版本已覆盖岗位所需的前端交付与 AI 产品协同能力，但结果表达和 JD 关键词映射仍有继续压缩与强化空间。",
   history: [
     { label: "初始解析", score: 71 },
     { label: "第一轮改写", score: 78 },
@@ -203,7 +203,7 @@ export const optimizationInsightGroups = [
     items: [
       "产品链路视角完整，能把上传、优化、面试训练串成一个统一体验。",
       "具备 React / TypeScript 交付能力，不只停留在方案层面。",
-      "页面重组和信息表达意识明确，符合岗位对体验落地的要求。",
+      "页面重组和信息表达意识明确，符合该岗位对体验落地的要求。",
     ],
   },
   {
@@ -215,7 +215,7 @@ export const optimizationInsightGroups = [
     ],
   },
   {
-    title: "改写建议",
+    title: "建议改写",
     items: [
       "把“负责页面重组”改写为“重构简历工作台信息架构，缩短用户从上传到优化的操作路径”。",
       "为 AI 相关经历补充“如何设计反馈闭环”和“输出了什么结果”两类句式。",
@@ -231,7 +231,7 @@ export const optimizedResumePreview = [
 ];
 
 export const uploadGuidance = [
-  "支持上传 PDF、DOCX、Markdown 和纯文本简历，并接入真实解析链路。",
-  "如果已有正文，也可以在下一步直接粘贴到优化工作台继续编辑。",
+  "支持上传 PDF 版本，后续联调阶段接入真实解析。",
+  "如果已有正文，也可以在下一步直接粘贴到优化工作台。",
   "建议优先选择最接近目标岗位的一版简历继续优化。",
 ];

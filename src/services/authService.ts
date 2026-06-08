@@ -3,9 +3,7 @@ import { clearAuthToken, getAuthToken, setAuthToken } from "@/lib/authToken";
 import { AppError, ErrorCode } from "@/lib/errors";
 import type {
   AuthPayloadDTO,
-  ResultBoolean,
   ResultVoid,
-  UserActualRespDTO,
   UserLoginReqDTO,
   UserRegisterReqDTO,
   UserRespDTO,
@@ -142,21 +140,5 @@ export const authService = {
     } finally {
       clearAuthToken();
     }
-  },
-
-  getUser: (username: string) => {
-    return service.get<UserRespDTO>(`/xunzhi/v1/users/${username}`);
-  },
-
-  getUserActual: (username: string) => {
-    return service.get<UserActualRespDTO>(
-      `/xunzhi/v1/users/actual/${username}`,
-    );
-  },
-
-  hasUsername: (username: string) => {
-    return service.get<ResultBoolean>("/xunzhi/v1/users/has-username", {
-      params: { username },
-    });
   },
 };

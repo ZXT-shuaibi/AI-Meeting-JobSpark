@@ -147,7 +147,7 @@ export interface AiMessageMediaReqDTO {
 }
 
 export interface ChatStreamParams {
-  sessionId: string;
+  sessionId?: string | null;
   inputMessage: string;
   userName: string;
   aiId?: number;
@@ -156,9 +156,21 @@ export interface ChatStreamParams {
   mediaList?: AiMessageMediaReqDTO[];
 }
 
+export interface ChatStreamMeta {
+  conversationId?: string;
+  taskId?: string;
+}
+
+export interface ChatStreamCompletion {
+  messageId?: string | null;
+  title?: string | null;
+}
+
 export interface StreamCallbacks {
   onMessage: (content: string) => void;
+  onMeta?: (payload: ChatStreamMeta) => void;
   onReasoning?: (content: string) => void;
+  onFinish?: (payload: ChatStreamCompletion) => void;
   onDone?: () => void;
   onError?: (error: Error) => void;
 }

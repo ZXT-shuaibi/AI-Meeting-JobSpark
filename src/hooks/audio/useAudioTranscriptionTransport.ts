@@ -52,20 +52,19 @@ export function useAudioTranscriptionTransport({
 
   const connect = useCallback(() => {
     const normalizedInterviewSessionId = interviewSessionId?.trim() || null;
-    if (!normalizedInterviewSessionId && !userId) {
+    if (!normalizedInterviewSessionId) {
       throw new Error(
-        "Audio transcription requires a valid session or user id",
+        "Audio transcription is only available for interview sessions",
       );
     }
 
     disconnect();
 
-    const transport = normalizedInterviewSessionId
-      ? new AudioToTextWebSocket({
-          mode: "career-interview",
-          interviewSessionId: normalizedInterviewSessionId,
-        })
-      : new AudioToTextWebSocket(userId as string);
+    void userId;
+    const transport = new AudioToTextWebSocket({
+      mode: "career-interview",
+      interviewSessionId: normalizedInterviewSessionId,
+    });
     transport.onConnected = () => {
       transport.sendCommand("start_transcription");
     };

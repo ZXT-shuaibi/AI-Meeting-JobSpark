@@ -30,7 +30,7 @@ const previewResumeCards: ResumeCardViewModel[] = [
   {
     id: "resume-01",
     name: "张潇童",
-    title: "AI 产品与前端协同简历",
+    title: "AI 产品与前端协同版简历",
     summary:
       "突出 AI 面试、简历优化与前端交付之间的完整链路，适合 AI 产品协同方向。",
     updatedAt: "2026-06-02 10:30",
@@ -40,9 +40,9 @@ const previewResumeCards: ResumeCardViewModel[] = [
   {
     id: "resume-02",
     name: "张潇童",
-    title: "智能面试产品简历",
+    title: "智能面试产品版简历",
     summary:
-      "强调语音交互、面试训练与报告复盘能力，更适合智能面试和教育科技岗位。",
+      "强调语音交互、面试训练与报告复盘能力，更适合智能面试与教育科技方向岗位。",
     updatedAt: "2026-05-28 18:10",
     targetRole: "智能面试产品",
     skills: ["LLM", "语音交互", "Node.js", "产品设计"],
@@ -201,17 +201,17 @@ export default function ResumeListPage() {
               <MetricCard
                 label="当前简历"
                 value={String(displayedResumes.length)}
-                description="可以继续编辑或定向优化的版本数量。"
+                description="可继续编辑或定向优化的版本数量。"
               />
               <MetricCard
                 label="主链路状态"
                 value={
                   isPreview ? "预览" : workspace.profileId ? "已接入" : "待上传"
                 }
-                description="主 /career 页面已按 workspace 上下文加载真实简历版本。"
+                description="/career 页面已按 workspace 上下文加载真实简历版本。"
               />
               <MetricCard
-                label="下一个动作"
+                label="下一步动作"
                 value={currentResumeId ? "优化" : "上传"}
                 description="先上传简历，再进入 JD 对齐和模拟面试。"
               />
@@ -312,7 +312,7 @@ export default function ResumeListPage() {
 
                   {resume.targetRole ? (
                     <p className="mt-4 text-sm text-slate-500">
-                      当前重点：{resume.targetRole}
+                      目标方向：{resume.targetRole}
                     </p>
                   ) : null}
 

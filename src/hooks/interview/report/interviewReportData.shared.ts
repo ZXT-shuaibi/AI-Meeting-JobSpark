@@ -35,7 +35,7 @@ export const STATIC_PREVIEW_INTERVIEW_REPORT: CareerInterviewReport = {
   sessionId: STATIC_PREVIEW_REPORT_SESSION_ID,
   overallScore: 89,
   summary:
-    "整体表现稳定，项目表达清晰，能够把业务目标、技术判断和结果复盘串起来，已经具备较强的一面表达基础。",
+    "整体表现稳定，项目表达清晰，能够把业务目标、技术判断和结果复盘串联起来，已经具备较强的一面表达基础。",
   radar: [
     { dimension: "简历匹配度", score: 84 },
     { dimension: "沟通表达", score: 91 },

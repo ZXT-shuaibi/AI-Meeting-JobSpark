@@ -4,7 +4,6 @@ import {
   planCareerInterviewTextToSpeech,
   type CareerInterviewTtsPlan,
 } from "@/services/careerService";
-import { xunfeiTtsService } from "@/services/xunfeiTtsService";
 
 export const INTERVIEW_QUESTION_TTS_REQUEST = Object.freeze({
   vcn: "x4_mingge",
@@ -34,9 +33,7 @@ export const normalizeBase64Audio = (value: string) =>
     .replace(/-/g, "+")
     .replace(/_/g, "/");
 
-export type SynthesizedTtsTask =
-  | Awaited<ReturnType<typeof xunfeiTtsService.synthesize>>
-  | CareerInterviewTtsPlan;
+export type SynthesizedTtsTask = CareerInterviewTtsPlan;
 
 export const synthesizeChatMessageTts = async (
   tts: ChatMessageTts | undefined,
@@ -71,11 +68,8 @@ export const synthesizeChatMessageTts = async (
     );
   }
 
-  return xunfeiTtsService.synthesize(
-    {
-      ...INTERVIEW_QUESTION_TTS_REQUEST,
-      text,
-    },
-    { signal },
+  void signal;
+  throw new Error(
+    "Chat TTS is only available during interviews in this phase.",
   );
 };

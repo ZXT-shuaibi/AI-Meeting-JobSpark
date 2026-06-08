@@ -88,6 +88,23 @@ describe("interviewService", () => {
     vi.clearAllMocks();
   });
 
+  it("does not expose the unused legacy interview records paging entry anymore", () => {
+    expect("pageInterviewRecords" in interviewService).toBe(false);
+  });
+
+  it("does not expose unused legacy interview compatibility entries anymore", () => {
+    expect("createInterviewSession" in interviewService).toBe(false);
+    expect("pageInterviewConversations" in interviewService).toBe(false);
+    expect("restoreInterviewSession" in interviewService).toBe(false);
+    expect("fetchInterviewResumePreviewBlob" in interviewService).toBe(false);
+    expect("uploadResume" in interviewService).toBe(false);
+    expect("extractInterviewQuestions" in interviewService).toBe(false);
+    expect("saveInterviewRecordFromRedis" in interviewService).toBe(false);
+    expect("saveInterviewRecord" in interviewService).toBe(false);
+    expect("getInterviewRadarChart" in interviewService).toBe(false);
+    expect("getInterviewRecordBySessionId" in interviewService).toBe(false);
+  });
+
   it("rejects empty questionNumber before request", async () => {
     const error = await interviewService
       .answerInterviewQuestion({

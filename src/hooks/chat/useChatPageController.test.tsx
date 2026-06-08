@@ -16,7 +16,6 @@ const navigateMock = vi.fn();
 const useLocationMock = vi.fn();
 const useParamsMock = vi.fn();
 const getConversationHistoryMock = vi.fn();
-const createConversationMock = vi.fn();
 const streamChatMock = vi.fn();
 
 vi.mock("react-router-dom", async () => {
@@ -47,7 +46,6 @@ vi.mock("@/services/aiService", () => ({
   aiService: {
     getConversationHistory: (...args: unknown[]) =>
       getConversationHistoryMock(...args),
-    createConversation: (...args: unknown[]) => createConversationMock(...args),
     streamChat: (...args: unknown[]) => streamChatMock(...args),
   },
 }));
@@ -125,21 +123,30 @@ describe("useChatPageController", () => {
       state: null,
     });
     getConversationHistoryMock.mockResolvedValue([]);
-    createConversationMock.mockResolvedValue({
-      sessionId: "session-created",
-      conversationTitle: "Created Session",
-    });
     streamChatMock.mockImplementation(
       async (
         _params: unknown,
         _signal: AbortSignal,
         callbacks: {
+          onMeta?: (payload: {
+            conversationId?: string;
+            taskId?: string;
+          }) => void;
           onMessage: (chunk: string) => void;
           onReasoning?: (chunk: string) => void;
+          onFinish?: (payload: { messageId?: string; title?: string }) => void;
           onDone?: () => void;
         },
       ) => {
+        callbacks.onMeta?.({
+          conversationId: "session-created",
+          taskId: "task-created",
+        });
         callbacks.onMessage("assistant reply");
+        callbacks.onFinish?.({
+          messageId: "message-created",
+          title: "Created Session",
+        });
         callbacks.onDone?.();
       },
     );
@@ -172,7 +179,7 @@ describe("useChatPageController", () => {
     });
 
     await waitFor(() => {
-      expect(createConversationMock).toHaveBeenCalledTimes(1);
+      expect(streamChatMock).toHaveBeenCalledTimes(1);
       expect(navigateMock).toHaveBeenCalledWith(
         `${ROUTES.chat}/session-created`,
         {
@@ -311,7 +318,6 @@ describe("useChatPageController", () => {
       result.current.composer.handleSend();
     });
 
-    expect(createConversationMock).not.toHaveBeenCalled();
     expect(streamChatMock).toHaveBeenCalledWith(
       expect.objectContaining({
         sessionId: "existing-session",
@@ -322,8 +328,8 @@ describe("useChatPageController", () => {
     );
   });
 
-  it("creates a conversation first and starts stream after route session is ready", async () => {
-    const { result, store, rerender } = renderChatController();
+  it("starts the first message immediately and binds the runtime when HireSpark returns meta", async () => {
+    const { result, store } = renderChatController();
 
     act(() => {
       result.current.composer.setInput("start from scratch");
@@ -333,32 +339,19 @@ describe("useChatPageController", () => {
       result.current.composer.handleSend();
     });
 
-    expect(createConversationMock).toHaveBeenCalledTimes(1);
-    expect(createConversationMock.mock.calls[0]?.[0]).toMatchObject({
-      firstMessage: "start from scratch",
-    });
-    expect(streamChatMock).toHaveBeenCalledTimes(0);
-    expect(store.getState().chat.pendingOutbound).not.toBeNull();
-
-    useParamsMock.mockReturnValue({
-      sessionId: "session-created",
-    });
-    rerender();
-
     await waitFor(() => {
       expect(streamChatMock).toHaveBeenCalledTimes(1);
     });
 
     expect(streamChatMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        sessionId: "session-created",
+        sessionId: null,
         inputMessage: "start from scratch",
       }),
       expect.any(AbortSignal),
       expect.any(Object),
     );
     expect(store.getState().chat.currentSessionId).toBe("session-created");
-    expect(store.getState().chat.pendingOutbound).toBeNull();
   });
 
   it("renders reasoning-only first response without requiring content chunks", async () => {
@@ -414,46 +407,6 @@ describe("useChatPageController", () => {
       expect(assistant?.content).toBe("");
       expect(assistant?.status).toBe("done");
     });
-  });
-
-  it("cancels pending first-message stream when user switches to another session", async () => {
-    const { result, store, rerender } = renderChatController();
-
-    act(() => {
-      result.current.composer.setInput("first pending");
-    });
-
-    await act(async () => {
-      result.current.composer.handleSend();
-    });
-
-    expect(createConversationMock).toHaveBeenCalledTimes(1);
-    expect(streamChatMock).toHaveBeenCalledTimes(0);
-    expect(store.getState().chat.pendingOutbound?.sessionId).toBe(
-      "session-created",
-    );
-
-    useParamsMock.mockReturnValue({
-      sessionId: "session-b",
-    });
-    getConversationHistoryMock.mockResolvedValueOnce([
-      {
-        id: "history-b",
-        sessionId: "session-b",
-        messageType: 2,
-        messageContent: "loaded b",
-        messageSeq: 1,
-        createTime: "2025-01-01T00:00:02.000Z",
-      },
-    ]);
-    rerender();
-
-    await waitFor(() => {
-      expect(result.current.history.messages[0]?.content).toBe("loaded b");
-    });
-
-    expect(streamChatMock).toHaveBeenCalledTimes(0);
-    expect(store.getState().chat.pendingOutbound).toBeNull();
   });
 
   it("drops stale stream chunks after switching to another session", async () => {

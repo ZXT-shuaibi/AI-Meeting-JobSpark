@@ -24,9 +24,7 @@ import {
   failAssistantMessage,
   finishAssistantMessage,
   setActiveStream,
-  setPendingOutbound,
   setChatRuntimeSession,
-  type PendingOutbound,
 } from "@/store/slices/chatSlice";
 
 type SendMessageOptions = {
@@ -41,14 +39,24 @@ type UseChatSendFlowOptions = {
   ) => void;
 };
 
+type StreamOutbound = {
+  requestId: string;
+  sessionId: string | null;
+  assistantMessageId: string;
+  content: string;
+  aiId?: number;
+  fallbackTitle: string;
+};
+
 export function useChatSendFlow({
   routeSessionId,
   navigateToSession,
 }: UseChatSendFlowOptions) {
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
-  const { messages, isStreaming, currentSessionId, pendingOutbound } =
-    useAppSelector((state) => state.chat);
+  const { messages, isStreaming, currentSessionId } = useAppSelector(
+    (state) => state.chat,
+  );
   const { currentUser, authEpoch } = useAppSelector((state) => state.user);
 
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -61,26 +69,19 @@ export function useChatSendFlow({
       abortControllerRef.current = null;
     }
     activeRequestIdRef.current = null;
-    if (pendingOutbound) {
-      dispatch(
-        finishAssistantMessage({
-          id: pendingOutbound.assistantMessageId,
-        }),
-      );
-      dispatch(setPendingOutbound(null));
-    }
     dispatch(setActiveStream(null));
-  }, [dispatch, pendingOutbound]);
+  }, [dispatch]);
 
   useEffect(() => {
     cancelActiveStreamRef.current = cancelActiveStream;
   }, [cancelActiveStream]);
 
   const streamMessage = useCallback(
-    async (outbound: PendingOutbound) => {
+    async (outbound: StreamOutbound) => {
       const abortController = new AbortController();
       abortControllerRef.current = abortController;
       activeRequestIdRef.current = outbound.requestId;
+      let resolvedSessionId = outbound.sessionId;
 
       let contentLimiter: TextStreamLimiter | null = null;
       let reasoningLimiter: TextStreamLimiter | null = null;
@@ -93,7 +94,7 @@ export function useChatSendFlow({
       dispatch(
         setActiveStream({
           requestId: outbound.requestId,
-          sessionId: outbound.sessionId,
+          sessionId: outbound.sessionId || outbound.requestId,
           messageId: outbound.assistantMessageId,
         }),
       );
@@ -140,6 +141,30 @@ export function useChatSendFlow({
           },
           abortController.signal,
           {
+            onMeta: (payload) => {
+              if (!isActiveRequest()) {
+                return;
+              }
+              const nextSessionId = payload.conversationId?.trim() || "";
+              if (!nextSessionId) {
+                return;
+              }
+              resolvedSessionId = nextSessionId;
+              dispatch(
+                setChatRuntimeSession({
+                  sessionId: nextSessionId,
+                  title: outbound.fallbackTitle,
+                }),
+              );
+              navigateToSession(nextSessionId, {
+                replace: true,
+              });
+
+              const userKey = getConversationUserKey(currentUser);
+              void queryClient.invalidateQueries({
+                queryKey: getConversationsQueryKey(userKey, authEpoch),
+              });
+            },
             onMessage: (chunk) => {
               if (!isActiveRequest()) {
                 return;
@@ -151,6 +176,25 @@ export function useChatSendFlow({
                 return;
               }
               reasoningLimiter?.push(chunk);
+            },
+            onFinish: (payload) => {
+              if (!isActiveRequest()) {
+                return;
+              }
+              const currentTitle = payload.title?.trim();
+              if (!currentTitle) {
+                return;
+              }
+              const runtimeSessionId = resolvedSessionId?.trim() || "";
+              if (!runtimeSessionId) {
+                return;
+              }
+              dispatch(
+                setChatRuntimeSession({
+                  sessionId: runtimeSessionId,
+                  title: currentTitle,
+                }),
+              );
             },
             onDone: () => {
               if (!isActiveRequest()) {
@@ -215,13 +259,13 @@ export function useChatSendFlow({
         dispatch(setActiveStream(null));
       }
     },
-    [currentUser, dispatch],
+    [authEpoch, currentUser, dispatch, navigateToSession, queryClient],
   );
 
   const sendMessage = useCallback(
     async (content: string, aiId?: number, options?: SendMessageOptions) => {
       const nextContent = content.trim();
-      if (!nextContent || isStreaming || Boolean(pendingOutbound)) {
+      if (!nextContent || isStreaming) {
         return;
       }
 
@@ -247,54 +291,10 @@ export function useChatSendFlow({
       dispatch(appendAssistantPlaceholder(assistantMessage));
 
       try {
-        let activeSessionId =
+        const activeSessionId =
           options?.forceNewSession === true
             ? null
             : routeSessionId || currentSessionId;
-
-        if (!activeSessionId) {
-          const response = await aiService.createConversation({
-            userName: currentUser?.username || "Guest",
-            firstMessage: nextContent,
-            aiId,
-          });
-
-          if (!response?.sessionId) {
-            throw new Error(
-              "Failed to create conversation: invalid response data",
-            );
-          }
-
-          activeSessionId = response.sessionId;
-          dispatch(
-            setChatRuntimeSession({
-              sessionId: activeSessionId,
-              title:
-                response.conversationTitle ||
-                nextContent.slice(0, 24) ||
-                activeSessionId,
-            }),
-          );
-          navigateToSession(activeSessionId, {
-            replace: true,
-          });
-
-          const userKey = getConversationUserKey(currentUser);
-          await queryClient.invalidateQueries({
-            queryKey: getConversationsQueryKey(userKey, authEpoch),
-          });
-
-          dispatch(
-            setPendingOutbound({
-              requestId,
-              sessionId: activeSessionId,
-              assistantMessageId: assistantMessage.id,
-              content: nextContent,
-              aiId,
-            }),
-          );
-          return;
-        }
 
         await streamMessage({
           requestId,
@@ -302,6 +302,7 @@ export function useChatSendFlow({
           assistantMessageId: assistantMessage.id,
           content: nextContent,
           aiId,
+          fallbackTitle: nextContent.slice(0, 24) || "New chat",
         });
       } catch (error: unknown) {
         console.error("Chat error:", error);
@@ -315,57 +316,14 @@ export function useChatSendFlow({
       }
     },
     [
-      authEpoch,
       cancelActiveStream,
       currentSessionId,
-      currentUser,
       dispatch,
       isStreaming,
-      navigateToSession,
-      pendingOutbound,
-      queryClient,
       routeSessionId,
       streamMessage,
     ],
   );
-
-  useEffect(() => {
-    if (!pendingOutbound || isStreaming) {
-      return;
-    }
-    if (
-      routeSessionId !== pendingOutbound.sessionId ||
-      currentSessionId !== pendingOutbound.sessionId
-    ) {
-      return;
-    }
-
-    dispatch(setPendingOutbound(null));
-    void streamMessage(pendingOutbound);
-  }, [
-    currentSessionId,
-    dispatch,
-    isStreaming,
-    pendingOutbound,
-    routeSessionId,
-    streamMessage,
-  ]);
-
-  useEffect(() => {
-    if (!pendingOutbound || !routeSessionId) {
-      return;
-    }
-    if (routeSessionId === pendingOutbound.sessionId) {
-      return;
-    }
-
-    dispatch(
-      finishAssistantMessage({
-        id: pendingOutbound.assistantMessageId,
-      }),
-    );
-    dispatch(setPendingOutbound(null));
-  }, [dispatch, pendingOutbound, routeSessionId]);
 
   useEffect(() => {
     return () => {
@@ -380,7 +338,7 @@ export function useChatSendFlow({
 
   return {
     messages,
-    isStreaming: isStreaming || Boolean(pendingOutbound),
+    isStreaming,
     sendMessage,
     cancelActiveStream,
   };

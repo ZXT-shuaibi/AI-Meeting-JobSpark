@@ -1,14 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
-  mockGetAuthToken,
-  mockResolveApiBaseUrl,
   mockResolveRuntimeWsBaseUrl,
   mockResolveWsBaseUrl,
   mockCreateCareerInterviewTranscriptionUrl,
 } = vi.hoisted(() => ({
-  mockGetAuthToken: vi.fn(() => "token"),
-  mockResolveApiBaseUrl: vi.fn(() => "/api"),
   mockResolveRuntimeWsBaseUrl: vi.fn(() => "ws://localhost:8080"),
   mockResolveWsBaseUrl: vi.fn(() => "ws://localhost:8080"),
   mockCreateCareerInterviewTranscriptionUrl: vi.fn(
@@ -17,12 +13,7 @@ const {
   ),
 }));
 
-vi.mock("@/lib/authToken", () => ({
-  getAuthToken: mockGetAuthToken,
-}));
-
 vi.mock("@/config/env", () => ({
-  resolveApiBaseUrl: mockResolveApiBaseUrl,
   resolveRuntimeWsBaseUrl: mockResolveRuntimeWsBaseUrl,
   resolveWsBaseUrl: mockResolveWsBaseUrl,
 }));
@@ -38,7 +29,10 @@ describe("AudioToTextWebSocket message handling", () => {
   let instance: AudioToTextWebSocket;
 
   beforeEach(() => {
-    instance = new AudioToTextWebSocket("tester");
+    instance = new AudioToTextWebSocket({
+      mode: "career-interview",
+      interviewSessionId: "session-1",
+    });
   });
 
   it("ignores out-of-order transcription packets", () => {
@@ -51,7 +45,8 @@ describe("AudioToTextWebSocket message handling", () => {
       }
     ).handleMessage({
       type: "transcription",
-      data: "最新快照",
+      fullText: "最新快照",
+      updateAction: "replace",
       timestamp: 20,
     });
     (
@@ -60,7 +55,8 @@ describe("AudioToTextWebSocket message handling", () => {
       }
     ).handleMessage({
       type: "transcription",
-      data: "旧快照",
+      fullText: "旧快照",
+      updateAction: "replace",
       timestamp: 10,
     });
 
@@ -74,7 +70,8 @@ describe("AudioToTextWebSocket message handling", () => {
 
     const message = {
       type: "transcription",
-      data: "重复快照",
+      fullText: "重复快照",
+      updateAction: "replace",
       timestamp: 30,
     };
     (

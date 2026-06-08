@@ -16,7 +16,7 @@ describe("interviewReportData.shared", () => {
       ],
       playback: [
         {
-          question: "请介绍你的项目",
+          question: "请介绍你的项目经验",
           answer: "我负责主导交付",
           score: 90,
           feedback: {

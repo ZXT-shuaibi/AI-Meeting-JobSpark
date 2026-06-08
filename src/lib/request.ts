@@ -61,17 +61,7 @@ export interface HttpClient {
 
 export const getApiBaseUrl = () => resolveAppEnv().apiBaseUrl;
 
-const AUTH_FREE_API_PATHS = new Set([
-  "/auth/login",
-  "/auth/logout",
-  "/xunzhi/v1/users/login",
-  "/xunzhi/v1/users/register",
-  "/xunzhi/v1/users/has-username",
-  "/xunzhi/v1/users/check-login",
-  "/xunzhi/v1/users/logout",
-]);
-
-const LEGACY_PROTECTED_API_PREFIX = "/xunzhi/v1/";
+const AUTH_FREE_API_PATHS = new Set(["/auth/login", "/auth/logout"]);
 
 const trimQueryAndHash = (path: string) => {
   const queryIndex = path.indexOf("?");
@@ -135,14 +125,13 @@ export const requiresAuthTokenForRequest = (url?: string) => {
   if (AUTH_FREE_API_PATHS.has(path)) {
     return false;
   }
-  if (path.startsWith(LEGACY_PROTECTED_API_PREFIX)) {
-    return true;
-  }
   return (
     path.startsWith("/career/") ||
     path.startsWith("/admin/") ||
     path.startsWith("/rag/") ||
-    path.startsWith("/user/")
+    path.startsWith("/user/") ||
+    path === "/conversations" ||
+    path.startsWith("/conversations/")
   );
 };
 
